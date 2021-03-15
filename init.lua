@@ -7,7 +7,6 @@ require("nvimTree.lua")
 require("bufferline.lua")
 require("statusline.lua")
 require("telescope-nvim.lua")
---require("vim-startify.lua")
 
 -- lsp
 require("nvim-lspconfig.lua")
@@ -25,7 +24,12 @@ cmd "colorscheme base16-onedark"
 cmd "syntax enable"
 cmd "syntax on"
 
-g.auto_save = 1
+-- Global mapping TODO worth move into its own file
+-- nmap <leader>w :w!<cr>
+vim.api.nvim_set_keymap("n", "<leader>w", ":w!<cr>", {})
+vim.api.nvim_set_keymap("v", "Y", "+y", {noremap = true})
+
+
 g.indentLine_enabled = 1
 g.indentLine_char_list = {'▏'}
 
