@@ -59,7 +59,6 @@ require "lspconfig".pyright.setup {
   enable = true,
   capabilities = capabilities,
   on_attach = custom_attach,
-  log.info(settings)
   settings = {
     python = {
 
