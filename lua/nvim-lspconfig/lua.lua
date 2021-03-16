@@ -71,6 +71,17 @@ lspconfig.pyright.setup {
   }
 }
 
+-- lsp for go
+lspconfig.gopls.setup {
+  cmd = {"gopls","--remote=auto"},
+  on_attach = custom_attach,
+  capabilities = capabilities,
+  init_options = {
+    usePlaceholders=true,
+    completeUnimported=true,
+  }
+}
+
 -- lsp for lua
 local home = os.getenv("HOME")
 local system_name
@@ -86,7 +97,7 @@ end
 
 lspconfig.sumneko_lua.setup {
   cmd = { home .. "/development/lua-language-server/bin/"..system_name.."/lua-language-server", "-E", home .. "/development/lua-language-server/main.lua"};
-  on_attach = on_attach,
+  on_attach = custom_attach,
   capabilities = capabilities;
   settings = {
       Lua = {
