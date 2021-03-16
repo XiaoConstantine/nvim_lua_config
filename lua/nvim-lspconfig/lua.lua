@@ -9,6 +9,7 @@ local function map(mode, lhs, rhs, opts)
 end
 
 local opts = {noremap = true, silent = true}
+local lspconfig = require'lspconfig'
 
 -- snippetSupport
 local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -55,7 +56,7 @@ local custom_attach = function(client)
 end
 
 --  lsp for python
-require "lspconfig".pyright.setup {
+lspconfig.pyright.setup {
   enable = true,
   capabilities = capabilities,
   on_attach = custom_attach,
@@ -79,7 +80,7 @@ else
   print("Unsupported system for sumneko")
 end
 
-require "lspconfig".sumneko_lua.setup {
+lspconfig.sumneko_lua.setup {
   cmd = { home .. "/development/lua-language-server/bin/"..system_name.."/lua-language-server", "-E", home .. "/development/lua-language-server/main.lua"};
   on_attach = on_attach,
   capabilities = capabilities;
@@ -106,7 +107,18 @@ require "lspconfig".sumneko_lua.setup {
 }
 
 -- lsp for rust
-require'lspconfig'.rust_analyzer.setup {
+lspconfig.rust_analyzer.setup {
   capabilities = capabilities,
   on_attach = custom_attach,
 }
+
+local servers = {
+  'dockerls','bashls','rust_analyzer','pyright'
+}
+
+for _, server in ipairs(servers) do
+  lspconfig[server].setup {
+    on_attach = custom_attach,
+    capabilities = capabilities,
+  }
+end
