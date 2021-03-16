@@ -18,6 +18,27 @@ git clone https://github.com/wbthomason/packer.nvim\
 ```
 
 
+LSP Setup
+---------
+
+Besides config under `nvim-lspconfig`, make sure you have corresponding
+language server running:
+
+```bash
+# For python
+npm install -g pyright
+
+# For go
+brew install gopls
+
+# For rust
+brew install rust-analyzer
+
+# For dockerls
+npm install -g dockerfile-language-server-nodejs
+
+```
+
 Goals
 -----
 * #### playing around with built-in LSP
