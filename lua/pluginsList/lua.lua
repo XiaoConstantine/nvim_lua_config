@@ -8,7 +8,10 @@ return require("packer").startup(
         use {"kyazdani42/nvim-tree.lua"}
         use {"nvim-lua/plenary.nvim"}
         use {"lewis6991/gitsigns.nvim"}
-        use {"glepnir/galaxyline.nvim"}
+        use {"glepnir/galaxyline.nvim", 
+            config = function() require'eviline' end,
+            requires = {'kyazdani42/nvim-web-devicons', opt = true}
+        }
         use {"akinsho/nvim-bufferline.lua"}
         use {"907th/vim-auto-save"}
         use {"nvim-treesitter/nvim-treesitter"}

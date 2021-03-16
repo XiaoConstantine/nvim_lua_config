@@ -1,14 +1,15 @@
 -- load plugins
 require("pluginsList.lua")
 require("web-devicons.lua")
-require("globals.lua")
 
+require("globals.lua")
 require("utils.lua")
 require("nvimTree.lua")
 require("bufferline.lua")
 require("statusline.lua")
 require("telescope-nvim.lua")
 require("options.lua")
+require("eviline.lua")
 
 -- lsp
 require("nvim-lspconfig.lua")
