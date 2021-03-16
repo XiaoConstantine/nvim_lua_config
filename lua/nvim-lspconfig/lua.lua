@@ -64,6 +64,10 @@ lspconfig.pyright.setup {
     python = {
 
     },
+    pyright = {
+      -- temp disable warning
+      stubPath = ""
+    }
   }
 }
 
