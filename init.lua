@@ -21,7 +21,6 @@ require "colorizer".setup()
 
 local cmd = vim.cmd
 local g = vim.g
-local indent = 2
 
 cmd "colorscheme base16-onedark"
 cmd "syntax enable"
