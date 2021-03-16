@@ -67,9 +67,7 @@ require "lspconfig".pyright.setup {
 }
 
 -- lsp for lua
--- This does not work yet since I m encountering some build issue with
--- sumneko_lua lua-language-server
-local sumneko_root_path = vim.fn.getenv("HOME").."/.local/bin/sumneko_lua"
+local home = os.getenv("HOME")
 local system_name
 if vim.fn.has("mac") == 1 then
   system_name = "macOS"
@@ -82,7 +80,7 @@ else
 end
 
 require "lspconfig".sumneko_lua.setup {
-  cmd = { sumneko_root_path .. "/bin/"..system_name.."/lua-language-server", "-E", sumneko_root_path .. "/main.lua"};
+  cmd = { home .. "/development/lua-language-server/bin/"..system_name.."/lua-language-server", "-E", home .. "/development/lua-language-server/main.lua"};
   on_attach = on_attach,
   capabilities = capabilities;
   settings = {
@@ -90,10 +88,9 @@ require "lspconfig".sumneko_lua.setup {
           runtime = {
               -- Tell the language server which version of Lua you're using (LuaJIT in the case of Neovim)
               version = 'LuaJIT',
-              -- Setup your lua path
-              path = vim.split(package.path, ';'),
           },
           diagnostics = {
+              enable = true,
               -- Get the language server to recognize the `vim` global
               globals = {'vim'},
           },
