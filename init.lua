@@ -17,6 +17,7 @@ require("nvim-compe.lua")
 
 require("gitsigns.lua")
 require("nvim-format.lua")
+require("lsp-saga.lua")
 
 require "colorizer".setup()
 

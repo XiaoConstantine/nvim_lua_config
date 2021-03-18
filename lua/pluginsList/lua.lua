@@ -28,6 +28,7 @@ return require("packer").startup(
         use {"nvim-telescope/telescope.nvim"}
         use {"nvim-telescope/telescope-media-files.nvim"}
         use {"nvim-lua/popup.nvim"}
+        use {"glepnir/lspsaga.nvim"}
         -- plugins I use frequently
         use {"junegunn/fzf", run = "./install"}
         use {"junegunn/fzf.vim"}

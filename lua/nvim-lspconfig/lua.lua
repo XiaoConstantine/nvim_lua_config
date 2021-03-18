@@ -48,11 +48,8 @@ local custom_attach = function(client)
     map("n", "]d", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
     map("n", "<space>q", "<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>", opts)
 
-    -- Per https://github.com/hrsh7th/nvim-compe#cant-get-sorting-to-work-correctly
-    -- remove omnifunc for compe
-    --[[
-       [vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-       ]]
+    map("n", "la", "<Cmd>lua vim.lsp.buf.code_action()<CR>", opts)
+    vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 end
 
 --  lsp for python
