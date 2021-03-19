@@ -39,6 +39,16 @@ npm install -g dockerfile-language-server-nodejs
 
 ```
 
+Notes
+-----
+
+* pyright doesn't provide much code_actions. it only has
+```bash
+codeActionKinds = { "quickfix", "source.organizeImports" }
+
+:lua print(vim.inspect(vim.lsp.buf_get_clients(0)[1].resolved_capabilities))
+```
+
 Goals
 -----
 * #### playing around with built-in LSP
