@@ -48,24 +48,13 @@ local custom_attach = function(client)
     map("n", "]d", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
     map("n", "<space>q", "<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>", opts)
 
-    map("n", "la", "<Cmd>lua vim.lsp.buf.code_action()<CR>", opts)
     vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 end
 
 --  lsp for python
 lspconfig.pyright.setup {
-  enable = true,
   capabilities = capabilities,
   on_attach = custom_attach,
-  settings = {
-    python = {
-
-    },
-    pyright = {
-      -- temp disable warning
-      stubPath = ""
-    }
-  }
 }
 
 -- lsp for go
