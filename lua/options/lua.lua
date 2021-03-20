@@ -86,3 +86,6 @@ opt.joinspaces = false         -- Two spaces and grade school, we're done
 
 -- set fillchars=eob:~
 opt.fillchars = { eob = "~" }
+
+
+opt.colorcolumn    = 100
