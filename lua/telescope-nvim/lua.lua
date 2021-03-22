@@ -1,10 +1,8 @@
 require("telescope").setup {
-    defaults = {
-        vimgrep_arguments = {
+    defaults = { vimgrep_arguments = {
             "rg",
             "--color=never",
-            "--no-heading",
-            "--with-filename",
+            "--no-heading", "--with-filename",
             "--line-number",
             "--column",
             "--smart-case"
@@ -71,3 +69,37 @@ vim.api.nvim_set_keymap("n", "<Leader>fb", [[<Cmd>lua require('telescope.builtin
 vim.api.nvim_set_keymap("n", "<Leader>fh", [[<Cmd>lua require('telescope.builtin').help_tags()<CR>]], opt)
 vim.api.nvim_set_keymap("n", "<Leader>fo", [[<Cmd>lua require('telescope.builtin').oldfiles()<CR>]], opt)
 vim.api.nvim_set_keymap("n", "<C-a>", [[ <Cmd> %y+<CR>]], opt)
+
+
+function _G.find_uc()
+    require('telescope.builtin').find_files {
+       prompt_title = "~ Compass ~",
+       shorten_path = false,
+       cwd = "~/development/urbancompass/",
+       width = .25,
+       layout_strategy = "horizontal",
+       layout_config = {
+           preview_width = 0.65
+       },
+    }
+end
+
+
+function _G.find_uc_sq()
+    require('telescope.builtin').find_files {
+       prompt_title = "~ Compass ~",
+       shorten_path = false,
+       cwd = "~/development/search-quality/",
+       width = .25,
+       layout_strategy = "horizontal",
+       layout_config = {
+           preview_width = 0.65
+       },
+    }
+end
+
+--[[
+   [Specific command related to my daily work
+   ]]
+vim.api.nvim_set_keymap("n", "<leader>fc", [[<Cmd>lua find_uc()<CR>]], opt)
+vim.api.nvim_set_keymap("n", "<leader>fq", [[<Cmd>lua find_uc_sq()<CR>]], opt)
