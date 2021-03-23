@@ -53,6 +53,7 @@ require("telescope").setup {
 }
 
 require("telescope").load_extension("media_files")
+require('telescope').load_extension('octo')
 
 local opt = {noremap = true, silent = true}
 vim.g.mapleader = ","
