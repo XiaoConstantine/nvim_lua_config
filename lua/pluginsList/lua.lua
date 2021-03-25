@@ -34,6 +34,7 @@ return require("packer").startup(
 			{'nvim-lua/plenary.nvim'},
 			{'nvim-telescope/telescope.nvim'}
         }}
+        use {'nvim-lua/lsp_extensions.nvim'}
         -- plugins I use frequently
         use {"junegunn/fzf", run = "./install"}
         use {"junegunn/fzf.vim"}

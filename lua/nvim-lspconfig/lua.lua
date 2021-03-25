@@ -10,6 +10,8 @@ end
 
 local opts = {noremap = true, silent = true}
 local lspconfig = require'lspconfig'
+local inlay_hints = require('lsp_extensions.inlay_hints')
+
 
 -- snippetSupport
 local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -30,7 +32,19 @@ function PeekDefinition()
   return vim.lsp.buf_request(0, 'textDocument/definition', params, preview_location_callback)
 end
 
+ShowInLineInlayHints = function()
+  vim.lsp.buf_request(0, 'rust-analyzer/inlayHints', inlay_hints.get_params(), inlay_hints.get_callback {
+    prefix = " >> ",
+    aligned = true,
+    only_current_line = true,
+    enabled = { "ChainingHint", "TypeHint", "ParameterHint"}
+
+  })
+end
+
 local custom_attach = function(client)
+    local filetype = vim.api.nvim_buf_get_option(0, 'filetype')
+
     -- mappings
     map("n", "gd", "<Cmd>lua vim.lsp.buf.definition()<CR>", opts)
     map("n", "gD", "<Cmd>lua vim.lsp.buf.declaration()<CR>", opts)
@@ -47,7 +61,16 @@ local custom_attach = function(client)
     map("n", "[d", "<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>", opts)
     map("n", "]d", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
     map("n", "<space>q", "<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>", opts)
+    -- Rust is currently the only thing w/ inlay hints
+    if filetype == 'rust' then
+		vim.cmd [[ autocmd BufEnter,BufWritePost,CursorHold,CursorHoldI *.rs :lua ShowInLineInlayHints() ]]
 
+    end
+
+    if vim.tbl_contains({"go", "rust"}, filetype) then
+        --[[
+           [vim.cmd [[ autocmd BufWritePre <buffer> :lua vim.lsp.buf.formatting_sync()]]
+    end
     vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 end
 
@@ -107,14 +130,25 @@ lspconfig.sumneko_lua.setup {
   },
 }
 
+-- neovim doesn't support the full 3.16 spec, but latest rust-analyzer requires the following capabilities.
+-- Remove once implemented.
+local rust_capabilities = vim.lsp.protocol.make_client_capabilities()
+rust_capabilities.workspace.workspaceEdit = {
+  normalizesLineEndings = true;
+  changeAnnotationSupport = {
+    groupsOnLabel = true;
+  };
+};
+rust_capabilities.textDocument.rename.prepareSupportDefaultBehavior = 1;
 -- lsp for rust
 lspconfig.rust_analyzer.setup {
-  capabilities = capabilities,
+  cmd = {"rust-analyzer"},
+  capabilities = rust_capabilities,
   on_attach = custom_attach,
 }
 
 local servers = {
-  'dockerls','bashls','rust_analyzer','pyright', 'jsonls'
+  'dockerls','bashls', 'jsonls'
 }
 
 for _, server in ipairs(servers) do
