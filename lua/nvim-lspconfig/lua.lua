@@ -61,6 +61,7 @@ local custom_attach = function(client)
     map("n", "[d", "<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>", opts)
     map("n", "]d", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
     map("n", "<space>q", "<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>", opts)
+    map("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting_sync({}, 1000)<CR>", opts)
     -- Rust is currently the only thing w/ inlay hints
     if filetype == 'rust' then
 		vim.cmd [[ autocmd BufEnter,BufWritePost,CursorHold,CursorHoldI *.rs :lua ShowInLineInlayHints() ]]
@@ -157,3 +158,41 @@ for _, server in ipairs(servers) do
     capabilities = capabilities,
   }
 end
+
+
+local DATA_PATH = home .. "/go/bin"
+lspconfig.efm.setup{
+    cmd = {DATA_PATH .. "/efm-langserver", "-logfile", home .. "/efm.log", "-loglevel", "5"},
+    on_attach=custom_attach,
+    capabilities = capabilities,
+    init_options = {documentFormatting = true, codeAction = false},
+    filetypes = {"lua", "python", "sh", "json", "yaml", "markdown", "rust", "go"},
+    settings = {
+    rootMarkers = {".git/"},
+    languages = {
+        python = {
+        --[[
+           [    {
+           [    LintCommand = "flake8 --max-line-length=100 --ignore=E111,E114,E121,E125,E129,E203,E402,E722,E741,F405,F601,F999,W503,TYP001 --stdin-display-name ${INPUT} -",
+           [    lintStdin = true,
+           [    lintFormats = {"%f:%l:%c: %m"}
+           [},
+           ]]
+        {formatCommand = "black -l 100 -", formatStdin = true}
+
+    },
+    --[[
+       [    lua = {
+       [    formatCommand = "lua-format -i --no-keep-simple-function-one-line --column-limit=120",
+       [    formatStdin = true
+       [},
+       ]]
+            --[[
+           [sh = sh_arguments,
+           [json = {prettier},
+           [yaml = {prettier},
+           [markdown = {markdownPandocFormat}
+           ]]
+    }
+}
+}
