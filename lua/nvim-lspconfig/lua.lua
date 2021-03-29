@@ -171,13 +171,11 @@ lspconfig.efm.setup{
     rootMarkers = {".git/"},
     languages = {
         python = {
-        --[[
-           [    {
-           [    LintCommand = "flake8 --max-line-length=100 --ignore=E111,E114,E121,E125,E129,E203,E402,E722,E741,F405,F601,F999,W503,TYP001 --stdin-display-name ${INPUT} -",
-           [    lintStdin = true,
-           [    lintFormats = {"%f:%l:%c: %m"}
-           [},
-           ]]
+            {
+            LintCommand = "flake8 --max-line-length=100 --ignore=E111,E114,E121,E125,E129,E203,E402,E722,E741,F405,F601,F999,W503,TYP001 --stdin-display-name ${INPUT} -",
+            lintStdin = true,
+            lintFormats = {"%f:%l:%c: %m"}
+        },
         {formatCommand = "black -l 100 -", formatStdin = true}
 
     },
