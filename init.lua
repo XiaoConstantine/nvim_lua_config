@@ -28,12 +28,6 @@ cmd "colorscheme base16-onedark"
 cmd "syntax enable"
 cmd "syntax on"
 
--- Global mapping TODO worth move into its own file
--- nmap <leader>w :w!<cr>
-vim.api.nvim_set_keymap("n", "<leader>w", ":w!<cr>", {})
-vim.api.nvim_set_keymap("v", "Y", "+y", {noremap = true})
-
-
 g.indentLine_enabled = 1
 g.indentLine_char_list = {'▏'}
 g.mapleader = ","

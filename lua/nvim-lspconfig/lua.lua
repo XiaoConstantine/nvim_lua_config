@@ -78,11 +78,27 @@ end
 lspconfig.pyright.setup {capabilities = capabilities, on_attach = custom_attach}
 
 -- lsp for go
+local updated_capabilities = vim.lsp.protocol.make_client_capabilities()
+updated_capabilities.textDocument.codeLens = {
+  dynamicRegistration = false,
+}
+
+local custom_init = function(client)
+  client.config.flags = client.config.flags or {}
+  client.config.flags.allow_incremental_sync = true
+end
+
 lspconfig.gopls.setup {
-    cmd = {"gopls", "--remote=auto"},
+    on_init = custom_init,
     on_attach = custom_attach,
-    capabilities = capabilities,
-    init_options = {usePlaceholders = true, completeUnimported = true}
+    capabilities = updated_capabilities,
+    settings = {
+        gopls = {
+            codelenses = {test = true}
+        }
+
+    }
+
 }
 
 -- lsp for lua
