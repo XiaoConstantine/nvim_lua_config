@@ -10,7 +10,6 @@ local plug_map = {
     ["v|Y"]          = map_cmd("+y"):with_noremap(),
     ["i|<TAB>"]      = map_cmd('v:lua.tab_complete()'):with_expr():with_silent(),
     ["i|<S-TAB>"]    = map_cmd('v:lua.s_tab_complete()'):with_silent():with_expr(),
-    ["i|<CR>"]       = map_cmd([[compe#confirm({ 'keys': "\<Plug>delimitMateCR", 'mode': '' })]]):with_noremap():with_expr():with_nowait(),
     -- Packer
     ["n|<leader>pu"]     = map_cr("PackerUpdate"):with_silent():with_noremap():with_nowait();
     ["n|<leader>pi"]     = map_cr("PackerInstall"):with_silent():with_noremap():with_nowait();
