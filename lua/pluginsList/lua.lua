@@ -30,11 +30,13 @@ return require("packer").startup(
         use {"nvim-telescope/telescope-media-files.nvim"}
         use {"nvim-lua/popup.nvim"}
         use {"glepnir/lspsaga.nvim"}
-        use {"pwntester/octo.nvim", requires = {
-			{'nvim-lua/popup.nvim'},
-			{'nvim-lua/plenary.nvim'},
-			{'nvim-telescope/telescope.nvim'}
-        }}
+        --[[
+           [use {"pwntester/octo.nvim", requires = {
+		   [    {'nvim-lua/popup.nvim'},
+		   [    {'nvim-lua/plenary.nvim'},
+		   [    {'nvim-telescope/telescope.nvim'}
+           [}}
+           ]]
         use {'nvim-lua/lsp_extensions.nvim'}
         -- plugins I use frequently
         use {"junegunn/fzf", run = "./install"}

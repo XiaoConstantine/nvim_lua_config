@@ -34,14 +34,12 @@ local plug_map = {
     ["n|<Leader>cw"]     = map_cmd("<cmd>lua vim.lsp.buf.workspace_symbol()<CR>"):with_noremap():with_silent(),
     ["n|<Leader>ce"]     = map_cr('Lspsaga show_line_diagnostics'):with_noremap():with_silent(),
     ["n|<Leader>ct"]      = map_args("Template"),
-    -- Plugin nvim-tree
-    ["n|<Leader>e"]      = map_cr('NvimTreeToggle'):with_noremap():with_silent(),
-    ["n|<Leader>F"]      = map_cr('NvimTreeFindFile'):with_noremap():with_silent(),
     -- Plugin MarkdownPreview
     ["n|<Leader>om"]     = map_cu('MarkdownPreview'):with_noremap():with_silent(),
     -- Plugin Telescope
     ["n|<Leader>fb"]     = map_cu('Telescope buffers'):with_noremap():with_silent(),
     ["n|<Leader>ff"]     = map_cu('Telescope file_browser'):with_noremap():with_silent(),
+    ["n|<Leader>fo"]     = map_cu('Telescope oldfiles'):with_noremap():with_silent(),
     ["n|<Leader>fg"]     = map_cu('Telescope git_files'):with_noremap():with_silent(),
     ["n|<Leader>fs"]     = map_cu('Telescope grep_string'):with_noremap():with_silent(),
     ["n|<Leader>fl"]     = map_cu('Telescope loclist'):with_noremap():with_silent(),
