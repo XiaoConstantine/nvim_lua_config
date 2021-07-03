@@ -49,14 +49,7 @@ codeActionKinds = { "quickfix", "source.organizeImports" }
 :lua print(vim.inspect(vim.lsp.buf_get_clients(0)[1].resolved_capabilities))
 ```
 
-Goals
------
-* #### playing around with built-in LSP
+M1 Related
+----------
 
-  [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
-
-  [nvim-compe](https://github.com/hrsh7th/nvim-compe)
-
-* #### playing around telescope!
-
-  [nvim-telescope](https://github.com/nvim-telescope/telescope.nvim)
+* Use `arch -arm64 brew` instead of `brew` to get around wrong arch Rosseta 2 error
