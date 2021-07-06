@@ -170,7 +170,7 @@ lspconfig.efm.setup {
     on_attach = custom_attach,
     capabilities = capabilities,
     init_options = {documentFormatting = true, codeAction = false},
-    filetypes = {"lua", "python", "sh", "json", "yaml", "markdown", "rust", "go"},
+    filetypes = {"lua", "python", "sh", "json", "yaml", "markdown", "rust"},
     settings = {
         rootMarkers = {".git/"},
         languages = {
