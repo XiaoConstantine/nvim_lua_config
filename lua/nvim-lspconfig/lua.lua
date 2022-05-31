@@ -1,6 +1,14 @@
 vim.cmd [[packadd nvim-lspconfig]]
 vim.cmd [[packadd nvim-compe]]
+vim.cmd [[packadd nvim-cmp]]
 vim.cmd [[packadd cmp-nvim-lsp]]
+
+
+require'cmp'.setup {
+  sources = {
+    { name = 'nvim_lsp' }
+  }
+}
 
 local function map(mode, lhs, rhs, opts)
     local options = {noremap = true}

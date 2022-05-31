@@ -8,9 +8,19 @@ return require("packer").startup(
         use {"kyazdani42/nvim-tree.lua"}
         use {"nvim-lua/plenary.nvim"}
         use {"lewis6991/gitsigns.nvim"}
-        use {"glepnir/galaxyline.nvim", 
-            config = function() require'eviline' end,
-            requires = {'kyazdani42/nvim-web-devicons', opt = true}
+        --[[
+           [use {"glepnir/galaxyline.nvim", 
+           [    branch = 'main',
+           [    config = function() require'spaceline' end,
+           [    requires = {'kyazdani42/nvim-web-devicons', opt = true}
+           [}
+           ]]
+        use{"NTBBloodbath/galaxyline.nvim",
+             -- your statusline
+             config = function()
+             require("galaxyline.themes.eviline") end,
+             -- some optional icons
+             requires = { "kyazdani42/nvim-web-devicons", opt = true }
         }
         use {"akinsho/nvim-bufferline.lua"}
         use {"907th/vim-auto-save"}
@@ -45,6 +55,8 @@ return require("packer").startup(
         use {"iamcco/markdown-preview.nvim", run = 'cd app & yarn install'}
         use { "scrooloose/nerdcommenter" }
         use {'hrsh7th/cmp-nvim-lsp', after = 'nvim-lspconfig' }
+        use {'hrsh7th/nvim-cmp', after = 'nvim-lspconfig'}
 
+        use { "nvim-telescope/telescope-file-browser.nvim" }
     end
 )
