@@ -1,16 +1,26 @@
+require 'nvim-treesitter.install'.compilers = { "clang" }
 local ts_config = require("nvim-treesitter.configs")
 
 ts_config.setup {
     ensure_installed = {
-        "javascript",
         "python",
         "bash",
-        "cpp",
         "rust",
-        "lua"
+        "go",
+        "lua",
     },
     highlight = {
         enable = true,
-        use_languagetree = true
-    }
+    },
+    textobjects = {
+      select = {
+        enable = true,
+        keymaps = {
+          ["af"] = "@function.outer",
+          ["if"] = "@function.inner",
+          ["ac"] = "@class.outer",
+          ["ic"] = "@class.inner",
+        },
+      },
+    },
 }

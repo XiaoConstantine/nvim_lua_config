@@ -44,5 +44,7 @@ return require("packer").startup(
         use {"mhinz/vim-startify"}
         use {"iamcco/markdown-preview.nvim", run = 'cd app & yarn install'}
         use { "scrooloose/nerdcommenter" }
+        use {'hrsh7th/cmp-nvim-lsp', after = 'nvim-lspconfig' }
+
     end
 )

@@ -1,5 +1,6 @@
 vim.cmd [[packadd nvim-lspconfig]]
 vim.cmd [[packadd nvim-compe]]
+vim.cmd [[packadd cmp-nvim-lsp]]
 
 local function map(mode, lhs, rhs, opts)
     local options = {noremap = true}
@@ -17,6 +18,9 @@ local capabilities = vim.lsp.protocol.make_client_capabilities()
 --[[
    [capabilities.textDocument.completion.completionItem.snippetSupport = true
    ]]
+
+capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+
 
 local function preview_location_callback(_, _, result)
     if result == nil or vim.tbl_isempty(result) then return nil end
@@ -78,10 +82,7 @@ end
 lspconfig.pyright.setup {capabilities = capabilities, on_attach = custom_attach}
 
 -- lsp for go
-local updated_capabilities = vim.lsp.protocol.make_client_capabilities()
-updated_capabilities.textDocument.codeLens = {
-  dynamicRegistration = false,
-}
+local updated_capabilities = capabilities
 
 local custom_init = function(client)
   client.config.flags = client.config.flags or {}
