@@ -52,6 +52,9 @@ local plug_map = {
     ["n|sa"]             = map_cmd("<Plug>(operator-surround-append)"):with_silent(),
     ["n|sd"]             = map_cmd("<Plug>(operator-surround-delete)"):with_silent(),
     ["n|sr"]             = map_cmd("<Plug>(operator-surround-replace)"):with_silent(),
+    -- acceleratedjk
+    ["n|j"]              = map_cmd('v:lua.enhance_jk_move("j")'):with_silent():with_expr(),
+    ["n|k"]              = map_cmd('v:lua.enhance_jk_move("k")'):with_silent():with_expr(),
 };
 
 bind.nvim_load_mapping(plug_map)

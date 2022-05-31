@@ -1,3 +1,5 @@
+vim.cmd [[packadd accelerated-jk]]
+
 local function check_back_space()
     local col = vim.fn.col('.') - 1
     if col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') then
@@ -33,4 +35,9 @@ _G.s_tab_complete = function()
   else
     return t "<S-Tab>"
   end
+end
+
+_G.enhance_jk_move = function(key)
+  local map = key == 'j' and '<Plug>(accelerated_jk_gj)' or '<Plug>(accelerated_jk_gk)'
+  return t(map)
 end
