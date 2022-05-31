@@ -69,6 +69,12 @@ end
 time([[try_loadstring definition]], false)
 time([[Defining packer_plugins]], true)
 _G.packer_plugins = {
+  ["accelerated-jk"] = {
+    loaded = false,
+    needs_bufread = false,
+    path = "/Users/xiao/.local/share/nvim/site/pack/packer/opt/accelerated-jk",
+    url = "https://github.com/rhysd/accelerated-jk"
+  },
   ["base16-vim"] = {
     loaded = true,
     path = "/Users/xiao/.local/share/nvim/site/pack/packer/start/base16-vim",
@@ -251,8 +257,8 @@ time([[Config for galaxyline.nvim]], false)
 -- Load plugins in order defined by `after`
 time([[Sequenced loading]], true)
 vim.cmd [[ packadd nvim-lspconfig ]]
-vim.cmd [[ packadd nvim-cmp ]]
 vim.cmd [[ packadd cmp-nvim-lsp ]]
+vim.cmd [[ packadd nvim-cmp ]]
 time([[Sequenced loading]], false)
 if should_profile then save_profiles() end
 

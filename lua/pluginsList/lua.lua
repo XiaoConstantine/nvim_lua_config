@@ -56,7 +56,7 @@ return require("packer").startup(
         use { "scrooloose/nerdcommenter" }
         use {'hrsh7th/cmp-nvim-lsp', after = 'nvim-lspconfig' }
         use {'hrsh7th/nvim-cmp', after = 'nvim-lspconfig'}
-
         use { "nvim-telescope/telescope-file-browser.nvim" }
+        use {"rhysd/accelerated-jk", opt = true}
     end
 )
