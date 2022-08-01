@@ -1,6 +1,7 @@
 -- load plugins
 require("pluginsList.lua")
 require("web-devicons.lua")
+require("auto-run.lua")
 
 require("globals.lua")
 require("utils.lua")
