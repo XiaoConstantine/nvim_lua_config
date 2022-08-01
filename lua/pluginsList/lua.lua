@@ -22,7 +22,7 @@ return require("packer").startup(
              -- some optional icons
              requires = { "kyazdani42/nvim-web-devicons", opt = true }
         }
-        use {"akinsho/nvim-bufferline.lua"}
+        use {"akinsho/nvim-bufferline.lua", tag = "v1.*"}
         use {"907th/vim-auto-save"}
         use {"nvim-treesitter/nvim-treesitter"}
         use {"chriskempson/base16-vim"}
@@ -58,5 +58,6 @@ return require("packer").startup(
         use {'hrsh7th/nvim-cmp', after = 'nvim-lspconfig'}
         use { "nvim-telescope/telescope-file-browser.nvim" }
         use {"rhysd/accelerated-jk", opt = true}
+        use {"bfredl/nvim-luadev"}
     end
 )
