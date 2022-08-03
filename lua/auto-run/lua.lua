@@ -29,37 +29,50 @@ local create_split_buf = function(width)
 end
 
 
-local default_cmd = function(filetype, mode)
-    local cmd = ""
+local default_cmd = function(filetype, mode, path)
+    local cmd
+    print(filetype, mode)
     if filetype == "python" then
-        cmd = "python3"
+        cmd = "python"
         if mode == "test" then
-            cmd = cmd .. " pytest"
+            cmd = cmd .. " -m pytest"
+        end
+        if path then
+            cmd = cmd .. " " ..path
         end
     elseif filetype == "go" then
         cmd = "go"
         if mode == "test" then
             cmd = cmd .. " test"
         end
+        if path then
+            cmd = cmd .. " " .. path
+        end
     elseif filetype == "zig" then
         cmd = "zig"
         if mode == "test" then
             cmd = cmd .. " test"
         end
+        if path then
+            cmd = cmd .. " " .. path
+        end
     end
-
-    print(cmd)
     return cmd
 end
 
 
 vim.api.nvim_create_user_command("AutoRun", function()
     print "AutoRun starts now..."
-    print(vim.bo.filetype)
-    local bufnr = create_split_buf(30)
-    local command = vim.split(vim.fn.input "Command: ", " ")
+    print(vim.api.nvim_buf_get_name(0))
+    local filetype = vim.bo.filetype
+    local bufnr = create_split_buf(50)
+    --[[
+       [local command = vim.split(vim.fn.input "Command: ", " ")
+       ]]
+    local path = vim.fn.input "Path: "
+    local mode = vim.fn.input "Mode: "
+    local command = default_cmd(filetype, mode, path)
     print(command)
-    print(default_cmd(vim.bo.filetype, "test"))
     local pattern = vim.fn.input "Pattern: "
     attach_to_buffer(tonumber(bufnr), pattern, command)
 end, {})
