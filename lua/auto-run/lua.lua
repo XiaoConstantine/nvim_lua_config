@@ -33,7 +33,7 @@ local default_cmd = function(filetype, mode, path)
     local cmd
     print(filetype, mode)
     if filetype == "python" then
-        cmd = "python"
+        cmd = "python3"
         if mode == "test" then
             cmd = cmd .. " -m pytest"
         end
@@ -53,8 +53,11 @@ local default_cmd = function(filetype, mode, path)
         if mode == "test" then
             cmd = cmd .. " test"
         end
+        print(path)
         if path then
-            cmd = cmd .. " " .. path
+            cmd = cmd .. " run " .. path
+        else
+            cmd = cmd .. " run " .. vim.api.nvim_buf_get_name(0)
         end
     end
     return cmd

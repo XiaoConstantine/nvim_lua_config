@@ -8,6 +8,7 @@ ts_config.setup {
         "rust",
         "go",
         "lua",
+        "zig",
     },
     highlight = {
         enable = true,

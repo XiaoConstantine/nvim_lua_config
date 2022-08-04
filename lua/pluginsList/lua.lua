@@ -59,5 +59,6 @@ return require("packer").startup(
         use { "nvim-telescope/telescope-file-browser.nvim" }
         use {"rhysd/accelerated-jk", opt = true}
         use {"bfredl/nvim-luadev"}
+        use {"ray-x/lsp_signature.nvim",}
     end
 )
