@@ -31,36 +31,23 @@ end
 
 local default_cmd = function(filetype, mode, path)
     local cmd
-    print(filetype, mode)
     if filetype == "python" then
         cmd = "python3"
         if mode == "test" then
             cmd = cmd .. " -m pytest"
-        end
-        if path then
-            cmd = cmd .. " " ..path
         end
     elseif filetype == "go" then
         cmd = "go"
         if mode == "test" then
             cmd = cmd .. " test"
         end
-        if path then
-            cmd = cmd .. " " .. path
-        end
     elseif filetype == "zig" then
         cmd = "zig"
         if mode == "test" then
             cmd = cmd .. " test"
         end
-        print(path)
-        if path then
-            cmd = cmd .. " run " .. path
-        else
-            cmd = cmd .. " run " .. vim.api.nvim_buf_get_name(0)
-        end
     end
-    return cmd
+    return cmd .. path
 end
 
 
@@ -72,7 +59,11 @@ vim.api.nvim_create_user_command("AutoRun", function()
     --[[
        [local command = vim.split(vim.fn.input "Command: ", " ")
        ]]
-    local path = vim.fn.input "Path: "
+    local path = vim.fn.input "Path: " or vim.api.nvim_buf_get_name(0)
+    if path == nil or path == '' then
+        path = vim.api.nvim_buf_get_name(0)
+    end
+    print(path)
     local mode = vim.fn.input "Mode: "
     local command = default_cmd(filetype, mode, path)
     print(command)

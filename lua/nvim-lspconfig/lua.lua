@@ -139,8 +139,7 @@ lspconfig.zls.setup {
     on_attach = custom_attach,
     capabilities = capabilities,
     handlers = {
-        ["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics,		
-             { virtual_text = false }),
+        ["textDocument/publishDiagnostics"] = vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics,             { virtual_text = false }),
         ["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, { border = "rounded" }),
         ["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, { border = "rounded" }),
     },
@@ -168,21 +167,10 @@ lspconfig.gopls.setup {
 
 }
 
--- lsp for lua
-local system_name
-if vim.fn.has("mac") == 1 then
-    system_name = "macOS"
-elseif vim.fn.has("unix") == 1 then
-    system_name = "Linux"
-elseif vim.fn.has('win32') == 1 then
-    system_name = "Windows"
-else
-    print("Unsupported system for sumneko")
-end
 
 lspconfig.sumneko_lua.setup {
     cmd = {
-        home .. "/development/lua-language-server/bin/" .. system_name .. "/lua-language-server",
+        home .. "/development/lua-language-server/bin/lua-language-server",
         "-E", home .. "/development/lua-language-server/main.lua"
     },
     on_attach = custom_attach,
