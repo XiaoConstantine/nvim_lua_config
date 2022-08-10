@@ -225,7 +225,7 @@ lspconfig.efm.setup {
     on_attach = custom_attach,
     capabilities = capabilities,
     init_options = {documentFormatting = true, codeAction = false},
-    filetypes = {"lua", "python", "sh", "json", "yaml", "markdown", "rust"},
+    filetypes = {"python", "sh", "json", "yaml", "markdown", "rust"},
     settings = {
         rootMarkers = {".git/"},
         languages = {
@@ -237,12 +237,6 @@ lspconfig.efm.setup {
                 }, {formatCommand = "black -l 100 -", formatStdin = true}
 
             },
-            lua = {
-                {
-                    formatCommand = "lua-format -i --column-limit=100, --indent-width=4",
-                    formatStdin = true
-                }
-            }
         }
    }
 }
