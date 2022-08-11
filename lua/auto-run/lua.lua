@@ -1,6 +1,8 @@
-local attach_to_buffer = function(output_bufnr, pattern, command)
+local auto_run = {}
+
+auto_run.attach_to_buffer = function(output_bufnr, pattern, command)
     vim.api.nvim_create_autocmd("BufWritePost", {
-        group = vim.api.nvim_create_augroup("my-auto-run", {clear = true}),
+        group = vim.api.nvim_create_augroup("my-auto-run", { clear = true }),
         pattern = pattern,
         callback = function()
             local append_data = function(_, data)
@@ -9,18 +11,18 @@ local attach_to_buffer = function(output_bufnr, pattern, command)
                 end
             end
 
-        vim.api.nvim_buf_set_lines(output_bufnr, 0, -1, false, {"Output:"})
-        vim.fn.jobstart(command, {
-            stdout_buffered = true,
-            on_stdout = append_data,
-            on_stderr = append_data,
-        })
-       end,
+            vim.api.nvim_buf_set_lines(output_bufnr, 0, -1, false, { "Output:" })
+            vim.fn.jobstart(command, {
+                stdout_buffered = true,
+                on_stdout = append_data,
+                on_stderr = append_data,
+            })
+        end,
     })
 end
 
 
-local create_split_buf = function(width)
+auto_run.create_split_buf = function(width)
     local bufnr = vim.api.nvim_create_buf(true, true)
     vim.cmd(("belowright vertical sbuffer " .. bufnr))
     local winnr = vim.api.nvim_get_current_win()
@@ -29,44 +31,47 @@ local create_split_buf = function(width)
 end
 
 
-local default_cmd = function(filetype, mode, path)
+auto_run.default_cmd = function(filetype, mode)
     local cmd
     if filetype == "python" then
         cmd = "python3"
         if mode == "test" then
-            cmd = cmd .. " -m pytest"
+            cmd = cmd .. " -m pytest "
         end
     elseif filetype == "go" then
         cmd = "go"
         if mode == "test" then
-            cmd = cmd .. " test"
+            cmd = cmd .. " test "
         end
     elseif filetype == "zig" then
-        cmd = "zig"
+        if mode == "test" then
+            cmd = "zig test "
+        elseif mode == "format" then
+            cmd = "zig fmt "
+        else
+            cmd = "zig run "
+        end
+    elseif filetype == "lua" then
+        cmd = "luamake"
         if mode == "test" then
             cmd = cmd .. " test"
         end
     end
-    return cmd .. path
+    return cmd
 end
 
 
 vim.api.nvim_create_user_command("AutoRun", function()
     print "AutoRun starts now..."
-    print(vim.api.nvim_buf_get_name(0))
     local filetype = vim.bo.filetype
-    local bufnr = create_split_buf(50)
-    --[[
-       [local command = vim.split(vim.fn.input "Command: ", " ")
-       ]]
-    local path = vim.fn.input "Path: " or vim.api.nvim_buf_get_name(0)
-    if path == nil or path == '' then
-        path = vim.api.nvim_buf_get_name(0)
-    end
-    print(path)
+    Path = vim.fn.input("Path: ", vim.api.nvim_buf_get_name(0))
     local mode = vim.fn.input "Mode: "
-    local command = default_cmd(filetype, mode, path)
-    print(command)
+    local command = auto_run.default_cmd(filetype, mode) .. Path
     local pattern = vim.fn.input "Pattern: "
-    attach_to_buffer(tonumber(bufnr), pattern, command)
+    -- turns out this is the cause of path not propagate properly
+    local bufnr = auto_run.create_split_buf(50)
+
+    auto_run.attach_to_buffer(tonumber(bufnr), pattern, command)
 end, {})
+
+return auto_run
