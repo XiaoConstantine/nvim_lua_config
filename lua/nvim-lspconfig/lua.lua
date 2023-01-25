@@ -30,7 +30,9 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
 		"additionalTextEdits",
 	},
 }
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+--[[
+   [capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
+   ]]
 
 
 local function preview_location_callback(_, _, result)
