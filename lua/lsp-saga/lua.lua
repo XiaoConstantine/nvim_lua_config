@@ -1,4 +1,4 @@
-require 'lspsaga'
+require "lspsaga"
 
 local keymap = vim.keymap.set
 
@@ -9,7 +9,7 @@ local keymap = vim.keymap.set
 keymap("n", "<space>ch", "<cmd>Lspsaga lsp_finder<CR>")
 
 -- Code action
-keymap({"n","v"}, "<space>ca", "<cmd>Lspsaga code_action<CR>")
+keymap({ "n", "v" }, "<space>ca", "<cmd>Lspsaga code_action<CR>")
 
 -- Rename all occurrences of the hovered word for the entire file
 keymap("n", "<space>cr", "<cmd>Lspsaga rename<CR>")
@@ -25,7 +25,7 @@ keymap("n", "<space>cr", "<cmd>Lspsaga rename ++project<CR>")
 keymap("n", "<space>cd", "<cmd>Lspsaga peek_definition<CR>")
 
 -- Go to definition
-keymap("n","<space>cd", "<cmd>Lspsaga goto_definition<CR>")
+keymap("n", "<space>cd", "<cmd>Lspsaga goto_definition<CR>")
 
 -- Peek type definition
 -- You can edit the file containing the type definition in the floating window
@@ -35,8 +35,7 @@ keymap("n","<space>cd", "<cmd>Lspsaga goto_definition<CR>")
 keymap("n", "<space>ct", "<cmd>Lspsaga peek_type_definition<CR>")
 
 -- Go to type definition
-keymap("n","<space>ct", "<cmd>Lspsaga goto_type_definition<CR>")
-
+keymap("n", "<space>ct", "<cmd>Lspsaga goto_type_definition<CR>")
 
 -- Show line diagnostics
 -- You can pass argument ++unfocus to
@@ -57,14 +56,14 @@ keymap("n", "]e", "<cmd>Lspsaga diagnostic_jump_next<CR>")
 
 -- Diagnostic jump with filters such as only jumping to an error
 keymap("n", "[E", function()
-  require("lspsaga.diagnostic"):goto_prev({ severity = vim.diagnostic.severity.ERROR })
+  require("lspsaga.diagnostic"):goto_prev { severity = vim.diagnostic.severity.ERROR }
 end)
 keymap("n", "]E", function()
-  require("lspsaga.diagnostic"):goto_next({ severity = vim.diagnostic.severity.ERROR })
+  require("lspsaga.diagnostic"):goto_next { severity = vim.diagnostic.severity.ERROR }
 end)
 
 -- Toggle outline
-keymap("n","<leader>o", "<cmd>Lspsaga outline<CR>")
+keymap("n", "<leader>o", "<cmd>Lspsaga outline<CR>")
 
 -- Hover Doc
 -- If there is no hover doc,
@@ -86,4 +85,4 @@ keymap("n", "<Leader>ci", "<cmd>Lspsaga incoming_calls<CR>")
 keymap("n", "<Leader>co", "<cmd>Lspsaga outgoing_calls<CR>")
 
 -- Floating terminal
-keymap({"n", "t"}, "<A-d>", "<cmd>Lspsaga term_toggle<CR>")
+keymap({ "n", "t" }, "<A-d>", "<cmd>Lspsaga term_toggle<CR>")

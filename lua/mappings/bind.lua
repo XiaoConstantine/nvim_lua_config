@@ -2,15 +2,15 @@ local rhs_options = {}
 
 function rhs_options:new()
   local instance = {
-    cmd = '',
+    cmd = "",
     options = {
       noremap = false,
       silent = false,
       expr = false,
       nowait = false,
-    }
+    },
   }
-  setmetatable(instance,self)
+  setmetatable(instance, self)
   self.__index = self
   return instance
 end
@@ -25,7 +25,7 @@ function rhs_options:map_cr(cmd_string)
   return self
 end
 
-function  rhs_options:map_args(cmd_string)
+function rhs_options:map_args(cmd_string)
   self.cmd = (":%s<Space>"):format(cmd_string)
   return self
 end
@@ -78,14 +78,14 @@ function pbind.map_args(cmd_string)
 end
 
 function pbind.nvim_load_mapping(mapping)
-    for key,value in pairs(mapping) do
-      local mode,keymap = key:match("([^|]*)|?(.*)")
-      if type(value) == 'table' then
-        local rhs = value.cmd
-        local options = value.options
-        vim.api.nvim_set_keymap(mode,keymap,rhs,options)
-      end
+  for key, value in pairs(mapping) do
+    local mode, keymap = key:match "([^|]*)|?(.*)"
+    if type(value) == "table" then
+      local rhs = value.cmd
+      local options = value.options
+      vim.api.nvim_set_keymap(mode, keymap, rhs, options)
     end
+  end
 end
 
 return pbind
