@@ -61,6 +61,15 @@ git pull --rebase origin master
 ```
 Then open vim and `PackerSync`
 
+* Treesitter related parser issue
+in vim:
+
+```vim
+TSUpdate
+
+```
+
+
 
 M1 Related
 ----------
