@@ -39,14 +39,6 @@ vim.g.nvim_tree_icons = {
   },
 }
 
---[[
-   [local get_lua_cb = function(cb_name)
-   [    return string.format(":lua require'nvim-tree'.on_keypress('%s')<CR>", cb_name)
-   [end
-   ]]
-
-local get_lua_cb = require("nvim-tree.config").nvim_tree_callback
-
 -- Mappings for nvimtree
 
 vim.api.nvim_set_keymap("n", "<C-n>", ":NvimTreeToggle<CR>", {

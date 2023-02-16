@@ -1,6 +1,7 @@
+local M = {}
 local scopes = { o = vim.o, b = vim.bo, w = vim.wo }
 
-local function opt(scope, key, value)
+local function opt(key, scope, value)
   scopes[scope][key] = value
   if scope ~= "o" then
     scopes["o"][key] = value
@@ -26,8 +27,6 @@ opt("o", "clipboard", "unnamedplus")
 -- for indenline
 opt("b", "expandtab", true)
 opt("b", "shiftwidth", 2)
-
-local M = {}
 
 function M.is_buffer_empty()
   -- Check whether the current buffer is empty

@@ -21,7 +21,6 @@ local signature = require "lsp_signature"
 local home = os.getenv "HOME"
 local opts = { noremap = true, silent = true }
 local lspconfig = require "lspconfig"
-local inlay_hints = require "lsp_extensions.inlay_hints"
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities.textDocument.completion.completionItem.snippetSupport = true
@@ -33,34 +32,10 @@ capabilities.textDocument.completion.completionItem.resolveSupport = {
   },
 }
 
-local function preview_location_callback(_, _, result)
-  if result == nil or vim.tbl_isempty(result) then
-    return nil
-  end
-  vim.lsp.util.preview_location(result[1])
-end
-
-function PeekDefinition()
-  local params = vim.lsp.util.make_position_params()
-  return vim.lsp.buf_request(0, "textDocument/definition", params, preview_location_callback)
-end
-
-ShowInLineInlayHints = function()
-  vim.lsp.buf_request(
-    0,
-    "rust-analyzer/inlayHints",
-    inlay_hints.get_params(),
-    inlay_hints.get_callback {
-      prefix = " >> ",
-      aligned = true,
-      only_current_line = true,
-      enabled = { "ChainingHint", "TypeHint", "ParameterHint" },
-    }
-  )
-end
-
-local custom_attach = function(client)
-  local filetype = vim.api.nvim_buf_get_option(0, "filetype")
+local custom_attach = function(_)
+  --[[
+     [local filetype = vim.api.nvim_buf_get_option(0, "filetype")
+     ]]
 
   -- mappings
   map("n", "gd", "<Cmd>lua vim.lsp.buf.definition()<CR>", opts)
@@ -80,10 +55,6 @@ local custom_attach = function(client)
   map("n", "]d", "<cmd>lua vim.lsp.diagnostic.goto_next()<CR>", opts)
   map("n", "<space>q", "<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>", opts)
   map("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting_sync({}, 1000)<CR>", opts)
-  -- Rust is currently the only thing w/ inlay hints
-  if filetype == "rust" then
-    vim.cmd [[ autocmd BufEnter,BufWritePost,CursorHold,CursorHoldI *.rs :lua ShowInLineInlayHints() ]]
-  end
   vim.api.nvim_buf_set_option(0, "omnifunc", "v:lua.vim.lsp.omnifunc")
 end
 
@@ -113,12 +84,14 @@ local cfg = {
   max_height = 12, -- max height of signature floating_window, if content is more than max_height, you can scroll down
   -- to view the hiding contents
   max_width = 120, -- max_width of signature floating_window, line will be wrapped if exceed max_width
-  transpancy = 10, -- set this value if you want the floating windows to be transpant (100 fully transpant), nil to disable(default)
+  transpancy = 10, -- set this value if you want the floating windows to be transpant (100 fully transpant),
+  -- nil to disable(default)
   handler_opts = {
     border = "single", -- double, single, shadow, none
   },
 
-  always_trigger = false, -- sometime show signature on new line or in middle of parameter can be confusing, set it to false for #58
+  always_trigger = false, -- sometime show signature on new line or in middle of parameter can be confusing,
+  -- set it to false for #58
 
   auto_close_after = nil, -- autoclose signature float win after x sec, disabled if nil.
   extra_trigger_chars = {}, -- Array of extra characters that will trigger signature completion, e.g., {"(", ","}
@@ -235,7 +208,9 @@ lspconfig.efm.setup {
     languages = {
       python = {
         {
-          LintCommand = "flake8 --max-line-length=100 --ignore=E111,E114,E121,E125,E129,E203,E402,E722,E741,F405,F601,F999,W503,TYP001 --stdin-display-name ${INPUT} -",
+          LintCommand = "flake8 --max-line-length=100 "
+            .. "--ignore=E111,E114,E121,E125,E129,E203,E402,E722,E741,F405,F601,F999,W503,TYP001 "
+            .. "--stdin-display-name ${INPUT} -",
           lintStdin = true,
           lintFormats = { "%f:%l:%c: %m" },
         },

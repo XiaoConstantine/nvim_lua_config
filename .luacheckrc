@@ -3,7 +3,8 @@ cache = true
 codes = true
 
 exclude_files = {
-  "tests/indent/lua/"
+  "plugin/",
+  "lua/utils"
 }
 
 -- Glorious list of warnings: https://luacheck.readthedocs.io/en/stable/warnings.html

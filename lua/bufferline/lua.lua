@@ -1,5 +1,18 @@
 vim.o.termguicolors = true
 
+--TODO seems this is exposing too much implementation details
+local lazy = require "bufferline.lazy"
+local colors = lazy.require "bufferline.colors"
+
+local hex = colors.get_color
+local comment_fg = hex {
+  name = "Comment",
+  attribute = "fg",
+  fallback = { name = "Normal", attribute = "fg" },
+}
+local normal_fg = hex { name = "Normal", attribute = "fg" }
+local string_fg = hex { name = "String", attribute = "fg" }
+
 -- colors for active , inactive buffer tabs
 require("bufferline").setup {
   options = {

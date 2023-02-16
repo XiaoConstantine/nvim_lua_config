@@ -1,14 +1,13 @@
 -- check if packer is installed (~/local/share/nvim/site/pack)
-local packer_exists = pcall(vim.cmd, [[packadd packer.nvim]])
 
-return require("packer").startup(function()
+return require("packer").startup(function(use)
   use { "wbthomason/packer.nvim", opt = true }
   use { "kyazdani42/nvim-web-devicons" }
   use { "kyazdani42/nvim-tree.lua" }
   use { "nvim-lua/plenary.nvim" }
   use { "lewis6991/gitsigns.nvim" }
   --[[
-           [use {"glepnir/galaxyline.nvim", 
+           [use {"glepnir/galaxyline.nvim",
            [    branch = 'main',
            [    config = function() require'spaceline' end,
            [    requires = {'kyazdani42/nvim-web-devicons', opt = true}

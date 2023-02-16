@@ -1,4 +1,5 @@
 local gl = require "galaxyline"
+local condition = require "galaxyline.condition"
 local gls = gl.section
 gl.short_line_list = { "LuaTree", "vista", "dbui" }
 
@@ -44,7 +45,7 @@ gls.left[2] = {
 gls.left[3] = {
   FileIcon = {
     provider = "FileIcon",
-    condition = buffer_not_empty,
+    condition = condition.buffer_not_empty,
     highlight = { require("galaxyline.providers.fileinfo").get_file_icon_color, colors.lightbg },
   },
 }
@@ -52,7 +53,7 @@ gls.left[3] = {
 gls.left[4] = {
   FileName = {
     provider = { "FileName", "FileSize" },
-    condition = buffer_not_empty,
+    condition = condition.buffer_not_empty,
     highlight = { colors.fg, colors.lightbg },
   },
 }

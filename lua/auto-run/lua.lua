@@ -61,9 +61,9 @@ end
 vim.api.nvim_create_user_command("AutoRun", function()
   print "AutoRun starts now..."
   local filetype = vim.bo.filetype
-  Path = vim.fn.input("Path: ", vim.api.nvim_buf_get_name(0))
+  local path = vim.fn.input("Path: ", vim.api.nvim_buf_get_name(0))
   local mode = vim.fn.input "Mode: "
-  local command = auto_run.default_cmd(filetype, mode) .. Path
+  local command = auto_run.default_cmd(filetype, mode) .. path
   local pattern = vim.fn.input "Pattern: "
   -- turns out this is the cause of path not propagate properly
   local bufnr = auto_run.create_split_buf(50)
