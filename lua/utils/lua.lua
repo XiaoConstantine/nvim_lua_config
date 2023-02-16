@@ -1,7 +1,7 @@
 local M = {}
 local scopes = { o = vim.o, b = vim.bo, w = vim.wo }
 
-local function opt(key, scope, value)
+local function opt(scope, key, value)
   scopes[scope][key] = value
   if scope ~= "o" then
     scopes["o"][key] = value

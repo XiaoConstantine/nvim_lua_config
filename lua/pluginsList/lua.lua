@@ -1,4 +1,5 @@
 -- check if packer is installed (~/local/share/nvim/site/pack)
+vim.cmd [[packadd packer.nvim]]
 
 return require("packer").startup(function(use)
   use { "wbthomason/packer.nvim", opt = true }
