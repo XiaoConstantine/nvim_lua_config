@@ -49,6 +49,19 @@ codeActionKinds = { "quickfix", "source.organizeImports" }
 :lua print(vim.inspect(vim.lsp.buf_get_clients(0)[1].resolved_capabilities))
 ```
 
+TroubleShooting
+---------------
+* Update treesitter
+
+When there's issue with treesitter, I found manually update source control works most of time:
+```bash
+cd ~/.local/share/nvim/site/pack/packer/start/nvim-treesitter
+git pull --rebase origin master
+
+```
+Then open vim and `PackerSync`
+
+
 M1 Related
 ----------
 
