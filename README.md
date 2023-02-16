@@ -1,4 +1,4 @@
-Nvim Lua config migration
+Nvim Lua config migration ![badge](https://github.com/XiaoConstantine/nvim_lua_config/actions/workflows/lint/badge.svg)
 ---------------------
 Lua only Neovim config WIP
 
