@@ -41,6 +41,14 @@ return require("packer").startup(function(use)
   use { "nvim-telescope/telescope-media-files.nvim" }
   use { "nvim-lua/popup.nvim" }
   use {
+    "phaazon/mind.nvim",
+    branch = "v2.2",
+    requires = { "nvim-lua/plenary.nvim" },
+    config = function()
+      require("mind").setup()
+    end,
+  }
+  use {
     "glepnir/lspsaga.nvim",
     branch = "main",
     config = function()
