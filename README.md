@@ -1,6 +1,6 @@
-Nvim Lua config migration ![lint master](https://github.com/XiaoConstantine/nvim_lua_config/actions/workflows/lint.yml/badge.svg)
+My Neovim Lua Config   ![lint master](https://github.com/XiaoConstantine/nvim_lua_config/actions/workflows/lint.yml/badge.svg)
 ---------------------
-Lua only Neovim config WIP
+Lua only Neovim config
 
 
 Getting started
