@@ -39,7 +39,18 @@ return require("packer").startup(
         use {'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
         use {"nvim-telescope/telescope-media-files.nvim"}
         use {"nvim-lua/popup.nvim"}
-        use {"glepnir/lspsaga.nvim"}
+        use({
+            "glepnir/lspsaga.nvim",
+            branch = "main",
+            config = function()
+                require("lspsaga").setup({})
+            end,
+            requires = {
+                {"nvim-tree/nvim-web-devicons"},
+                --Please make sure you install markdown and markdown_inline parser
+                {"nvim-treesitter/nvim-treesitter"}
+            }
+        })
         --[[
            [use {"pwntester/octo.nvim", requires = {
 		   [    {'nvim-lua/popup.nvim'},
