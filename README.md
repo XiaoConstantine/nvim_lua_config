@@ -6,7 +6,7 @@ Lua only Neovim config
 Getting started
 ---------------
 
-#### Require Neovim nightly before 0.5 release
+#### Require Stable Neovim release
 [nvim-release](https://github.com/neovim/neovim/releases)
 
 #### Require Packer
