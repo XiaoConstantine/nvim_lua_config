@@ -144,7 +144,7 @@ lspconfig.gopls.setup {
   signature.setup(cfg),
 }
 
-lspconfig.sumneko_lua.setup {
+lspconfig.lua_ls.setup {
   cmd = {
     home .. "/development/lua-language-server/bin/lua-language-server",
     "-E",
