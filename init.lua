@@ -540,10 +540,24 @@ require("lazy").setup {
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+      local on_attach = function(client, bufnr)
+        if client.name == "ruff_lsp" then
+          -- Disable hover in favor of Pyright
+          client.server_capabilities.hoverProvider = false
+        end
+      end
       local servers = {
         -- clangd = {},
         gopls = {},
-        pyright = {},
+        pyright = {
+          settings = {
+            disableOrganizeImports = true,
+          },
+        },
+        ruff = {},
+        ruff_lsp = {
+          on_attach = on_attach,
+        },
         rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
