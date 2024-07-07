@@ -1,0 +1,31 @@
+# Installation section
+# Fields:
+#   - name: Name of the tool (required)
+#   - method: Installation method, e.g., 'cask' for Homebrew Cask (optional)
+#   - install_command: Custom command to install the tool (optional)
+tools:
+  - name: "zsh"
+  - name: "neovim"
+  - name: "alacritty" # Replace 'example_tool_name' with the actual tool name.
+    method: "cask"
+  - name: "arc"
+    method: "cask"
+  - name: "zed"
+    method: "cask"
+  - name: "zimfw"
+    install_command: "curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh"
+  - name: "zshz"
+    install_command: "echo 'zmodule https://github.com/agkozak/zsh-z' >> ~/.zimrc && zimfw install"
+
+# Configuration section
+# Fields:
+#   - name: Name of the tool to configure (required)
+#   - config_url: URL to the configuration file (required)
+#   - install_path: Path where the configuration should be installed (required)
+configure:
+  - name: "neovim"
+    config_url: "https://github.com/XiaoConstantine/nvim_lua_config/init.vim"
+    install_path: "~/.config/nvim/init.vim"
+  - name: "alacritty"
+    config_url: "https://github.com/XiaoConstantine/nvim_lua_config/alacritty.toml"
+    install_path: "~/.config/alacritty.toml"
