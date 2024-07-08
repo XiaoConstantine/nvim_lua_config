@@ -5,8 +5,11 @@
 #   - install_command: Custom command to install the tool (optional)
 tools:
   - name: "zsh"
+  - name: "git"
   - name: "tmux"
   - name: "neovim"
+  - name: "gh"
+  - name: "ghq"
   - name: "alacritty" # Replace 'example_tool_name' with the actual tool name.
     method: "cask"
   - name: "arc"
@@ -15,10 +18,10 @@ tools:
     method: "cask"
   - name: "zimfw"
     install_command: "curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh"
-  - name: "zshz"
-    install_command: "echo 'zmodule https://github.com/agkozak/zsh-z' >> ~/.zimrc && zimfw install"
-  - name: "forgit"
-    install_command: "echo 'zmodule https://github.com/wfxr/forgit' >> ~/.zimrc && zimfw install"
+  # - name: "zshz"
+  #   install_command: "echo 'zmodule https://github.com/agkozak/zsh-z' >> ~/.zimrc && zimfw install"
+  # - name: "forgit"
+  #   install_command: "echo 'zmodule https://github.com/wfxr/forgit' >> ~/.zimrc && zimfw install"
 
 # Configuration section
 # Fields:
