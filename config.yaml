@@ -17,6 +17,8 @@ tools:
     install_command: "curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh"
   - name: "zshz"
     install_command: "echo 'zmodule https://github.com/agkozak/zsh-z' >> ~/.zimrc && zimfw install"
+  - name: "forgit"
+    install_command: "echo 'zmodule https://github.com/wfxr/forgit' >> ~/.zimrc && zimfw install"
 
 # Configuration section
 # Fields:
@@ -30,3 +32,9 @@ configure:
   - name: "alacritty"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/alacritty.toml"
     install_path: "~/.config/alacritty.toml"
+  - name: "tmux"
+    config_url: "https://github.com/XiaoConstantine/nvim_lua_config/.tmux.conf"
+    install_path: "~/.tmux.conf"
+  - name: "git"
+    config_url: "https://github.com/XiaoConstantine/nvim_lua_config/.gitconfg"
+    install_path: "~/.gitconfig"

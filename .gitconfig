@@ -1,0 +1,39 @@
+[user]
+    name = Xiao Cui
+    email = constantine124@gmail.com
+[ghq]
+    root = ~/development
+[alias]
+    lg = log --oneline --color --graph --decorate --all
+    lgg = log --all --topo-order --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%ci) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+    co = checkout
+    s = status
+    d = diff
+    bl = branch --list
+    br = branch
+    ss = show-branch --list
+    st = status -sbu
+    sh = show --pretty="format:" --name-only
+    c = commit
+    ri = rebase -i
+    prom = pull --rebase origin master
+[color]
+    diff = auto
+    status = auto
+    branch = auto
+    interactive = auto
+    ui = true
+    pager = true
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+[color "status"]
+    added = yellow
+    change = green
+    untracked = cyan
