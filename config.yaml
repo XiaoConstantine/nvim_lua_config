@@ -5,6 +5,7 @@
 #   - install_command: Custom command to install the tool (optional)
 tools:
   - name: "zsh"
+  - name: "tmux"
   - name: "neovim"
   - name: "alacritty" # Replace 'example_tool_name' with the actual tool name.
     method: "cask"
