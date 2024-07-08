@@ -7,17 +7,30 @@ tools:
   - name: "zsh"
   - name: "git"
   - name: "tmux"
+  - name: "fzf"
+  - name: "bat"
+  - name: "ripgrep"
   - name: "neovim"
+  - name: "pyenv"
   - name: "gh"
   - name: "ghq"
+  - name: "luajit"
+  - name: "go"
   - name: "alacritty" # Replace 'example_tool_name' with the actual tool name.
     method: "cask"
   - name: "arc"
     method: "cask"
   - name: "zed"
     method: "cask"
+  - name: "docker"
+    method: "cask"
   - name: "zimfw"
     install_command: "curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh"
+  - name: "uv"
+    install_command: "curl -LsSf https://astral.sh/uv/install.sh | sh"
+  - name: "rust"
+    install_command: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+
   # - name: "zshz"
   #   install_command: "echo 'zmodule https://github.com/agkozak/zsh-z' >> ~/.zimrc && zimfw install"
   # - name: "forgit"
@@ -26,8 +39,9 @@ tools:
 # Configuration section
 # Fields:
 #   - name: Name of the tool to configure (required)
-#   - config_url: URL to the configuration file (required)
+#   - config_url: URL to the configuration file (optional)
 #   - install_path: Path where the configuration should be installed (required)
+#   - configure_command: Command for configuring tools (optional)
 configure:
   - name: "neovim"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/init.vim"
