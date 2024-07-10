@@ -45,7 +45,7 @@ tools:
 configure:
   - name: "neovim"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/init.lua"
-    install_path: "~/.config/nvim/init.vim"
+    install_path: "~/.config/nvim/init.lua"
   - name: "alacritty"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/alacritty.toml"
     install_path: "~/.config/alacritty.toml"
@@ -55,3 +55,6 @@ configure:
   - name: "git"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/.gitconfig"
     install_path: "~/.gitconfig"
+  - name: "github"
+    install_path: "~/.config/gh"
+    configure_command: gh auth login
