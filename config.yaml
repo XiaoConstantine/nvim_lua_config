@@ -13,6 +13,8 @@ tools:
   - name: "neovim"
   - name: "pyenv"
   - name: "gh"
+    post_install:
+      - gh auth login
   - name: "ghq"
   - name: "luajit"
   - name: "go"
@@ -61,10 +63,18 @@ configure:
   - name: "zmodule"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/.zsh_custom"
     install_path: "~/.zsh_custom"
-  - name: "zimfw"
-    configure_command: echo 'zmodule $HOME/.zsh_custom' >> $HOME/.zimrc
   - name: "zsh"
     configure_command: echo 'source $HOME/.alias.zsh' >> $HOME/.zshrc
-  - name: "github"
-    install_path: "~/.config/gh"
-    configure_command: gh auth login
+  - name: "zimfw"
+    configure_command:
+      - |
+        if [ -f ~/.zsh_custom ]; then
+          while IFS= read -r line; do
+            if [[ $line == zmodule* ]] && ! grep -qF "$line" ~/.zimrc; then
+              echo "$line" >> ~/.zimrc
+            fi
+          done < ~/.zsh_custom
+        else
+          echo "~/.zsh_custom file not found. Skipping module addition."
+        fi
+
