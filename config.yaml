@@ -55,6 +55,16 @@ configure:
   - name: "git"
     config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/.gitconfig"
     install_path: "~/.gitconfig"
+  - name: "alias"
+    config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/.alias.zsh"
+    install_path: "~/.alias.zsh"
+  - name: "zmodule"
+    config_url: "https://github.com/XiaoConstantine/nvim_lua_config/blob/master/.zsh_custom"
+    install_path: "~/.zsh_custom"
+  - name: "zimfw"
+    configure_command: echo 'zmodule $HOME/.zsh_custom' >> $HOME/.zimrc
+  - name: "zsh"
+    configure_command: echo 'source $HOME/.alias.zsh' >> $HOME/.zshrc
   - name: "github"
     install_path: "~/.config/gh"
     configure_command: gh auth login
