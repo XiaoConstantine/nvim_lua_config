@@ -250,11 +250,6 @@ require("lazy").setup {
     end,
   },
 
-  -- Here is a more advanced example where we pass configuration
-  -- options to `gitsigns.nvim`. This is equivalent to the following lua:
-  --    require('gitsigns').setup({ ... })
-  --
-  -- See `:help gitsigns` to understand what the configuration keys do
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     "lewis6991/gitsigns.nvim",
     opts = {
@@ -265,6 +260,91 @@ require("lazy").setup {
         topdelete = { text = "‾" },
         changedelete = { text = "~" },
       },
+      -- Enable line blame by default
+      current_line_blame = true,
+      -- Customize the blame line format
+      current_line_blame_formatter = "<author>, <author_time:%Y-%m-%d> - <summary>",
+      -- Show blame info with a slight delay (in milliseconds)
+      current_line_blame_delay = 500,
+      -- Add keymaps for git operations
+      on_attach = function(bufnr)
+        local gs = package.loaded.gitsigns
+
+        -- Navigation between hunks
+        vim.keymap.set("n", "]c", function()
+          if vim.wo.diff then
+            return "]c"
+          end
+          vim.schedule(function()
+            gs.next_hunk()
+          end)
+          return "<Ignore>"
+        end, { expr = true, buffer = bufnr, desc = "Next git hunk" })
+
+        vim.keymap.set("n", "[c", function()
+          if vim.wo.diff then
+            return "[c"
+          end
+          vim.schedule(function()
+            gs.prev_hunk()
+          end)
+          return "<Ignore>"
+        end, { expr = true, buffer = bufnr, desc = "Previous git hunk" })
+
+        -- Line blame
+        vim.keymap.set(
+          "n",
+          "<leader>gb",
+          gs.toggle_current_line_blame,
+          { buffer = bufnr, desc = "Toggle git blame line" }
+        )
+
+        -- Full file blame
+        vim.keymap.set("n", "<leader>gB", function()
+          gs.blame_line { full = true }
+        end, { buffer = bufnr, desc = "Show full git blame" })
+
+        -- View line history
+        vim.keymap.set("n", "<leader>gh", gs.preview_hunk, { buffer = bufnr, desc = "Preview git hunk" })
+
+        -- View file history
+        vim.keymap.set("n", "<leader>gH", function()
+          vim.cmd "Gitsigns diffthis HEAD~1"
+        end, { buffer = bufnr, desc = "View file history diff" })
+
+        -- View line history in a new buffer
+        -- vim.keymap.set("n", "<leader>gl", function()
+        -- 	-- Open line history in Telescope
+        -- 	require("telescope.builtin").git_bcommits_range()
+        -- end, { buffer = bufnr, desc = "View line history" })
+
+        vim.keymap.set("n", "<leader>gl", function()
+          -- Open line blame window in a new buffer
+          gs.blame_line {
+            full = true,
+            ignore_whitespace = true,
+            window = {
+              border = "rounded",
+            },
+          }
+        end, { buffer = bufnr, desc = "View line history in new buffer" })
+
+        -- Also add visual mode mapping for selecting range
+        vim.keymap.set("v", "<leader>gl", function()
+          gs.blame_line {
+            full = true,
+            ignore_whitespace = true,
+            window = {
+              border = "rounded",
+            },
+          }
+        end, { buffer = bufnr, desc = "View selection history in new buffer" })
+        -- View project history
+        vim.keymap.set("n", "<leader>gp", function()
+          -- Open project history in Telescope
+          require("telescope.builtin").git_commits()
+        end, { buffer = bufnr, desc = "View project history" })
+      end,
     },
   },
   {
@@ -929,7 +1009,120 @@ require("lazy").setup {
     -- This makes your Neovim startup faster
     event = { "BufReadPost", "BufNewFile" },
   },
+  {
+    "stevearc/oil.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require("oil").setup {
+        -- Oil will take over directory buffers (e.g. `vim .` or `:e dir`)
+        default_file_explorer = true,
+        -- Keymaps in oil buffer. Can be any value that `vim.keymap.set` accepts OR a table of keymap
+        -- options with a `callback` (e.g. { callback = function() ... end, desc = "", mode = "n" })
+        keymaps = {
+          ["g?"] = "actions.show_help",
+          ["<CR>"] = "actions.select",
+          ["<C-v>"] = "actions.select_vsplit",
+          ["<C-s>"] = "actions.select_split",
+          ["<C-t>"] = "actions.select_tab",
+          ["<C-p>"] = "actions.preview",
+          ["<C-c>"] = "actions.close",
+          ["<C-r>"] = "actions.refresh",
+          ["-"] = "actions.parent",
+          ["_"] = "actions.open_cwd",
+          ["`"] = "actions.cd",
+          ["~"] = "actions.tcd",
+          ["gs"] = "actions.change_sort",
+          ["gx"] = "actions.open_external",
+          ["g."] = "actions.toggle_hidden",
+        },
+        -- Set to false to disable all of the above keymaps
+        use_default_keymaps = false,
+        -- Configuration for the floating window in oil.open_float
+        float = {
+          -- Padding around the floating window
+          padding = 2,
+          max_width = 100,
+          max_height = 40,
+          border = "rounded",
+          win_options = {
+            winblend = 0,
+          },
+        },
+        -- Configuration for the actions floating preview window
+        preview = {
+          -- Width dimensions can be integers or a float between 0 and 1 (e.g. 0.4 for 40%)
+          -- min_width and max_width can be a single value or a list of mixed integer/float types.
+          max_width = 0.9,
+          -- min_width = {40, 0.4} means "the greater of 40 columns or 40% of total"
+          min_width = { 40, 0.4 },
+          -- optionally define an integer/float for the exact width of the preview window
+          width = nil,
+          -- Height dimensions can be integers or a float between 0 and 1 (e.g. 0.4 for 40%)
+          -- min_height and max_height can be a single value or a list of mixed integer/float types.
+          max_height = 0.9,
+          -- min_height = {15, 0.1} means "the greater of 15 columns or 10% of total"
+          min_height = { 15, 0.1 },
+          -- optionally define an integer/float for the exact height of the preview window
+          height = nil,
+          border = "rounded",
+          win_options = {
+            winblend = 0,
+          },
+        },
+        -- Configuration for the floating progress window
+        progress = {
+          max_width = 0.9,
+          min_width = { 40, 0.4 },
+          width = nil,
+          max_height = { 10, 0.9 },
+          min_height = { 5, 0.1 },
+          height = nil,
+          border = "rounded",
+          minimized_border = "none",
+          win_options = {
+            winblend = 0,
+          },
+        },
+        -- List of hidden file patterns. Oil will never show entries matching these patterns
+        -- By default, oil hides gitignore'd files. Set `skip_confirm_for_simple_edits` to false to disable this
+        hidden_patterns = { "^\\.git/$" },
+        -- Set to true to skip the confirm step for simple operations (move, delete)
+        skip_confirm_for_simple_edits = true,
+        -- Don't show LSP and COC diagnostics in the oil buffer
+        lsp_file_methods = {
+          ["textDocument/codeAction"] = false,
+          ["textDocument/hover"] = false,
+          ["textDocument/definition"] = false,
+          ["textDocument/declaration"] = false,
+          ["textDocument/implementation"] = false,
+          ["textDocument/references"] = false,
+          ["textDocument/rename"] = false,
+        },
+        view_options = {
+          -- Show files and directories that start with "."
+          show_hidden = true,
+          -- This function defines what is considered a "hidden" file
+          is_hidden_file = function(name, bufnr)
+            return vim.startswith(name, ".")
+          end,
+          -- This function defines what will never be shown, even when `show_hidden` is set
+          is_always_hidden = function(name, bufnr)
+            return false
+          end,
+          sort = {
+            -- sort order can be "asc" or "desc"
+            -- see :help oil-columns to see which columns are sortable
+            order = "asc",
+            -- sort by "name", "mtime" (modification time), "size", "type"
+            fn = "name",
+          },
+        },
+      }
 
+      -- Set up the - keymap to open oil
+      vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
+    end,
+  },
   { -- Highlight, edit, and navigate code
     "nvim-treesitter/nvim-treesitter",
     dependencies = {
