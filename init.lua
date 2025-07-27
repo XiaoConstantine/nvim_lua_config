@@ -397,9 +397,10 @@ require("lazy").setup {
       -- Document existing key chains
       require("which-key").register {
         ["<leader>c"] = { name = "[C]ode", _ = "which_key_ignore" },
-        ["<leader>d"] = { name = "[D]ocument", _ = "which_key_ignore" },
+        ["<leader>d"] = { name = "[D]ebug", _ = "which_key_ignore" },
         ["<leader>r"] = { name = "[R]ename", _ = "which_key_ignore" },
         ["<leader>s"] = { name = "[S]earch", _ = "which_key_ignore" },
+        ["<leader>t"] = { name = "[T]est", _ = "which_key_ignore" },
         ["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
       }
     end,
@@ -724,6 +725,10 @@ require("lazy").setup {
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         "stylua", -- Used to format lua code
+        "debugpy", -- Python debugger
+        "delve", -- Go debugger
+        "golangci-lint", -- Go linter
+        "ruff", -- Python linter (backup if uv not available)
       })
       require("mason-tool-installer").setup { ensure_installed = ensure_installed }
 
@@ -1181,6 +1186,185 @@ require("lazy").setup {
       --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
       --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+    end,
+  },
+
+  -- Enhanced linting with uv ruff and golangci-lint
+  {
+    "mfussenegger/nvim-lint",
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      local lint = require "lint"
+
+      -- Configure linters
+      lint.linters_by_ft = {
+        python = { "ruff" },
+        go = { "golangcilint" },
+      }
+
+      -- Use uv ruff if available
+      if vim.fn.executable "uv" == 1 then
+        lint.linters.ruff.cmd = "uv"
+        lint.linters.ruff.args = { "run", "ruff", "check", "--output-format", "json", "-" }
+      end
+
+      -- Auto-lint on events
+      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+        callback = function()
+          lint.try_lint()
+        end,
+      })
+
+      -- Manual lint keybinding
+      vim.keymap.set("n", "<leader>cl", "<cmd>lua require('lint').try_lint()<cr>", { desc = "Lint current buffer" })
+    end,
+  },
+
+  -- Modern test runner
+  {
+    "nvim-neotest/neotest",
+    dependencies = {
+      "nvim-neotest/nvim-nio",
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+      "nvim-neotest/neotest-python",
+      "fredrikaverpil/neotest-golang",
+    },
+    config = function()
+      require("neotest").setup {
+        adapters = {
+          require "neotest-python" {
+            dap = { justMyCode = false },
+            runner = "pytest",
+            python = function()
+              -- Use uv python if available
+              if vim.fn.executable "uv" == 1 then
+                return vim.fn.system("uv run which python"):gsub("\n", "")
+              end
+              return vim.fn.exepath "python3" or vim.fn.exepath "python"
+            end,
+          },
+          require "neotest-golang" {
+            go_test_args = { "-v", "-race", "-count=1", "-timeout=60s" },
+            dap_go_enabled = true,
+          },
+        },
+      }
+
+      -- Test keybindings
+      vim.keymap.set("n", "<leader>tt", "<cmd>lua require('neotest').run.run()<cr>", { desc = "Run nearest test" })
+      vim.keymap.set(
+        "n",
+        "<leader>tf",
+        "<cmd>lua require('neotest').run.run(vim.fn.expand('%'))<cr>",
+        { desc = "Run test file" }
+      )
+      vim.keymap.set(
+        "n",
+        "<leader>td",
+        "<cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>",
+        { desc = "Debug nearest test" }
+      )
+      vim.keymap.set(
+        "n",
+        "<leader>ts",
+        "<cmd>lua require('neotest').summary.toggle()<cr>",
+        { desc = "Toggle test summary" }
+      )
+      vim.keymap.set(
+        "n",
+        "<leader>to",
+        "<cmd>lua require('neotest').output.open({ enter = true })<cr>",
+        { desc = "Show test output" }
+      )
+    end,
+  },
+
+  -- Core debugging
+  {
+    "mfussenegger/nvim-dap",
+    dependencies = {
+      "rcarriga/nvim-dap-ui",
+      "theHamsta/nvim-dap-virtual-text",
+      "nvim-neotest/nvim-nio",
+      "williamboman/mason.nvim",
+    },
+    config = function()
+      local dap = require "dap"
+      local dapui = require "dapui"
+
+      dapui.setup()
+      require("nvim-dap-virtual-text").setup()
+
+      -- Auto-open/close UI
+      dap.listeners.after.event_initialized["dapui_config"] = dapui.open
+      dap.listeners.before.event_terminated["dapui_config"] = dapui.close
+      dap.listeners.before.event_exited["dapui_config"] = dapui.close
+
+      -- Debug keybindings
+      vim.keymap.set(
+        "n",
+        "<leader>db",
+        "<cmd>lua require('dap').toggle_breakpoint()<cr>",
+        { desc = "Toggle breakpoint" }
+      )
+      vim.keymap.set("n", "<leader>dc", "<cmd>lua require('dap').continue()<cr>", { desc = "Continue/Start debugging" })
+      vim.keymap.set("n", "<leader>di", "<cmd>lua require('dap').step_into()<cr>", { desc = "Step into" })
+      vim.keymap.set("n", "<leader>do", "<cmd>lua require('dap').step_over()<cr>", { desc = "Step over" })
+      vim.keymap.set("n", "<leader>dO", "<cmd>lua require('dap').step_out()<cr>", { desc = "Step out" })
+      vim.keymap.set("n", "<leader>dr", "<cmd>lua require('dap').repl.open()<cr>", { desc = "Open debug REPL" })
+      vim.keymap.set("n", "<leader>dt", "<cmd>lua require('dapui').toggle()<cr>", { desc = "Toggle debug UI" })
+    end,
+  },
+
+  -- Python debugging
+  {
+    "mfussenegger/nvim-dap-python",
+    ft = "python",
+    dependencies = { "mfussenegger/nvim-dap" },
+    config = function()
+      -- Use uv python for debugging
+      local python_path = function()
+        if vim.fn.executable "uv" == 1 then
+          return vim.fn.system("uv run which python"):gsub("\n", "")
+        end
+        return vim.fn.exepath "python3" or vim.fn.exepath "python"
+      end
+
+      require("dap-python").setup(python_path())
+
+      -- Python-specific debug keybindings
+      vim.keymap.set(
+        "n",
+        "<leader>dpt",
+        "<cmd>lua require('dap-python').test_method()<cr>",
+        { desc = "Debug test method" }
+      )
+      vim.keymap.set(
+        "n",
+        "<leader>dpc",
+        "<cmd>lua require('dap-python').test_class()<cr>",
+        { desc = "Debug test class" }
+      )
+    end,
+  },
+
+  -- Go debugging
+  {
+    "leoluz/nvim-dap-go",
+    ft = "go",
+    dependencies = { "mfussenegger/nvim-dap" },
+    config = function()
+      require("dap-go").setup()
+
+      -- Go-specific debug keybindings
+      vim.keymap.set("n", "<leader>dgt", "<cmd>lua require('dap-go').debug_test()<cr>", { desc = "Debug Go test" })
+      vim.keymap.set(
+        "n",
+        "<leader>dgl",
+        "<cmd>lua require('dap-go').debug_last_test()<cr>",
+        { desc = "Debug last Go test" }
+      )
     end,
   },
 
