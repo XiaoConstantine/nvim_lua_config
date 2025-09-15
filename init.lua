@@ -654,7 +654,7 @@ require("lazy").setup {
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local on_attach = function(client, bufnr)
-        if client.name == "ruff_lsp" then
+        if client.name == "ruff" then
           -- Disable hover in favor of Pyright
           client.server_capabilities.hoverProvider = false
         end
@@ -667,10 +667,7 @@ require("lazy").setup {
             disableOrganizeImports = true,
           },
         },
-        ruff_lsp = {
-          on_attach = on_attach,
-        },
-        ruff = {},
+        ruff = { on_attach = on_attach },
         rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
