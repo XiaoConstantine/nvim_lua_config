@@ -90,6 +90,27 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+-- Lazy-cached uv python path (computed on first use, not at startup)
+local _cached_uv_python = nil
+local function get_uv_python()
+  if _cached_uv_python then
+    return _cached_uv_python
+  end
+  -- Defer expensive system call until actually needed
+  vim.schedule(function() end) -- yield to event loop
+  if vim.fn.executable "uv" == 1 then
+    local handle = io.popen "uv run which python 2>/dev/null"
+    if handle then
+      _cached_uv_python = handle:read "*l" or ""
+      handle:close()
+    end
+  end
+  if not _cached_uv_python or _cached_uv_python == "" then
+    _cached_uv_python = vim.fn.exepath "python3" or vim.fn.exepath "python" or "python"
+  end
+  return _cached_uv_python
+end
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -97,9 +118,8 @@ vim.g.maplocalleader = " "
 
 -- Make line numbers default
 vim.opt.number = true
--- You can also add relative line numbers, for help with jumping.
---  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+-- Relative line numbers help with jump commands (5j, 12k, etc.)
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = "a"
@@ -148,11 +168,13 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
--- Enable treesitter folding
+-- Treesitter folding (disabled by default, enable with zi)
 vim.opt.foldmethod = "expr"
-vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.opt.foldtext = ""
 vim.opt.foldenable = false
 vim.opt.foldlevel = 99
+vim.opt.foldlevelstart = 99
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -207,7 +229,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
   vim.fn.system { "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath }
 end ---@diagnostic disable-next-line: undefined-field
@@ -224,7 +246,7 @@ vim.opt.rtp:prepend(lazypath)
 --    :Lazy update
 --
 -- NOTE: Here is where you install your plugins.
-require("lazy").setup {
+require("lazy").setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   "tpope/vim-sleuth", -- Detect tabstop and shiftwidth automatically
 
@@ -238,8 +260,8 @@ require("lazy").setup {
   --    require('Comment').setup({})
 
   -- "gc" to comment visual regions/lines
-  { "numToStr/Comment.nvim", opts = {} },
-  { "simrat39/inlay-hints.nvim", opts = {} },
+  { "numToStr/Comment.nvim", event = { "BufReadPre", "BufNewFile" }, opts = {} },
+  { "simrat39/inlay-hints.nvim", event = "LspAttach", opts = {} },
 
   {
     "iamcco/markdown-preview.nvim",
@@ -252,6 +274,7 @@ require("lazy").setup {
 
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     "lewis6991/gitsigns.nvim",
+    event = { "BufReadPre", "BufNewFile" },
     opts = {
       signs = {
         add = { text = "+" },
@@ -318,27 +341,15 @@ require("lazy").setup {
         -- 	require("telescope.builtin").git_bcommits_range()
         -- end, { buffer = bufnr, desc = "View line history" })
 
-        vim.keymap.set("n", "<leader>gl", function()
-          -- Open line blame window in a new buffer
-          gs.blame_line {
-            full = true,
-            ignore_whitespace = true,
-            window = {
-              border = "rounded",
-            },
-          }
-        end, { buffer = bufnr, desc = "View line history in new buffer" })
-
-        -- Also add visual mode mapping for selecting range
-        vim.keymap.set("v", "<leader>gl", function()
-          gs.blame_line {
-            full = true,
-            ignore_whitespace = true,
-            window = {
-              border = "rounded",
-            },
-          }
-        end, { buffer = bufnr, desc = "View selection history in new buffer" })
+        -- Stage/unstage hunk
+        vim.keymap.set("n", "<leader>gs", gs.stage_hunk, { buffer = bufnr, desc = "Stage hunk" })
+        vim.keymap.set("n", "<leader>gr", gs.reset_hunk, { buffer = bufnr, desc = "Reset hunk" })
+        vim.keymap.set("v", "<leader>gs", function()
+          gs.stage_hunk { vim.fn.line ".", vim.fn.line "v" }
+        end, { buffer = bufnr, desc = "Stage selected lines" })
+        vim.keymap.set("v", "<leader>gr", function()
+          gs.reset_hunk { vim.fn.line ".", vim.fn.line "v" }
+        end, { buffer = bufnr, desc = "Reset selected lines" })
         -- View project history
         vim.keymap.set("n", "<leader>gp", function()
           -- Open project history in Telescope
@@ -394,14 +405,15 @@ require("lazy").setup {
     config = function() -- This is the function that runs, AFTER loading
       require("which-key").setup()
 
-      -- Document existing key chains
-      require("which-key").register {
-        ["<leader>c"] = { name = "[C]ode", _ = "which_key_ignore" },
-        ["<leader>d"] = { name = "[D]ebug", _ = "which_key_ignore" },
-        ["<leader>r"] = { name = "[R]ename", _ = "which_key_ignore" },
-        ["<leader>s"] = { name = "[S]earch", _ = "which_key_ignore" },
-        ["<leader>t"] = { name = "[T]est", _ = "which_key_ignore" },
-        ["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
+      -- Document existing key chains (which-key v3 API)
+      require("which-key").add {
+        { "<leader>c", group = "[C]ode" },
+        { "<leader>d", group = "[D]ebug" },
+        { "<leader>g", group = "[G]it" },
+        { "<leader>r", group = "[R]ename" },
+        { "<leader>s", group = "[S]earch" },
+        { "<leader>t", group = "[T]est" },
+        { "<leader>w", group = "[W]orkspace" },
       }
     end,
   },
@@ -413,111 +425,134 @@ require("lazy").setup {
   --
   -- Use the `dependencies` key to specify the dependencies of a particular plugin
 
-  { -- Fuzzy Finder (files, lsp, etc)
+  { -- Fuzzy Finder (files, lsp, etc) - lazy-loaded on keys
     "nvim-telescope/telescope.nvim",
-    event = "VimEnter",
     branch = "0.1.x",
     dependencies = {
       "nvim-lua/plenary.nvim",
       { -- If encountering errors, see telescope-fzf-native README for install instructions
         "nvim-telescope/telescope-fzf-native.nvim",
-
-        -- `build` is used to run some command when the plugin is installed/updated.
-        -- This is only run then, not every time Neovim starts up.
         build = "make",
-
-        -- `cond` is a condition used to determine whether this plugin should be
-        -- installed and loaded.
         cond = function()
           return vim.fn.executable "make" == 1
         end,
       },
       { "nvim-telescope/telescope-ui-select.nvim" },
-
-      -- Useful for getting pretty icons, but requires special font.
-      --  If you already have a Nerd Font, or terminal set up with fallback fonts
-      --  you can enable this
-      -- { 'nvim-tree/nvim-web-devicons' }
+      { "nvim-tree/nvim-web-devicons" },
+    },
+    cmd = "Telescope",
+    keys = {
+      {
+        "<leader>sh",
+        function()
+          require("telescope.builtin").help_tags()
+        end,
+        desc = "[S]earch [H]elp",
+      },
+      {
+        "<leader>sk",
+        function()
+          require("telescope.builtin").keymaps()
+        end,
+        desc = "[S]earch [K]eymaps",
+      },
+      {
+        "<leader>sf",
+        function()
+          require("telescope.builtin").find_files()
+        end,
+        desc = "[S]earch [F]iles",
+      },
+      {
+        "<leader>ss",
+        function()
+          require("telescope.builtin").builtin()
+        end,
+        desc = "[S]earch [S]elect Telescope",
+      },
+      {
+        "<leader>sw",
+        function()
+          require("telescope.builtin").grep_string()
+        end,
+        desc = "[S]earch current [W]ord",
+      },
+      {
+        "<leader>sg",
+        function()
+          require("telescope.builtin").live_grep()
+        end,
+        desc = "[S]earch by [G]rep",
+      },
+      {
+        "<leader>sd",
+        function()
+          require("telescope.builtin").diagnostics()
+        end,
+        desc = "[S]earch [D]iagnostics",
+      },
+      {
+        "<leader>sr",
+        function()
+          require("telescope.builtin").resume()
+        end,
+        desc = "[S]earch [R]esume",
+      },
+      {
+        "<leader>s.",
+        function()
+          require("telescope.builtin").oldfiles()
+        end,
+        desc = "[S]earch Recent Files",
+      },
+      {
+        "<leader><leader>",
+        function()
+          require("telescope.builtin").buffers()
+        end,
+        desc = "Find existing buffers",
+      },
+      {
+        "<leader>sm",
+        function()
+          require("telescope.builtin").git_status()
+        end,
+        desc = "[S]earch [M]odified files",
+      },
+      {
+        "<leader>/",
+        function()
+          require("telescope.builtin").current_buffer_fuzzy_find(
+            require("telescope.themes").get_dropdown { winblend = 10, previewer = false }
+          )
+        end,
+        desc = "[/] Fuzzily search in current buffer",
+      },
+      {
+        "<leader>s/",
+        function()
+          require("telescope.builtin").live_grep { grep_open_files = true, prompt_title = "Live Grep in Open Files" }
+        end,
+        desc = "[S]earch [/] in Open Files",
+      },
+      {
+        "<leader>sn",
+        function()
+          require("telescope.builtin").find_files { cwd = vim.fn.stdpath "config" }
+        end,
+        desc = "[S]earch [N]eovim files",
+      },
     },
     config = function()
-      -- Telescope is a fuzzy finder that comes with a lot of different things that
-      -- it can fuzzy find! It's more than just a "file finder", it can search
-      -- many different aspects of Neovim, your workspace, LSP, and more!
-      --
-      -- The easiest way to use telescope, is to start by doing something like:
-      --  :Telescope help_tags
-      --
-      -- After running this command, a window will open up and you're able to
-      -- type in the prompt window. You'll see a list of help_tags options and
-      -- a corresponding preview of the help.
-      --
-      -- Two important keymaps to use while in telescope are:
-      --  - Insert mode: <c-/>
-      --  - Normal mode: ?
-      --
-      -- This opens a window that shows you all of the keymaps for the current
-      -- telescope picker. This is really useful to discover what Telescope can
-      -- do as well as how to actually do it!
-
-      -- [[ Configure Telescope ]]
-      -- See `:help telescope` and `:help telescope.setup()`
       require("telescope").setup {
-        -- You can put your default mappings / updates / etc. in here
-        --  All the info you're looking for is in `:help telescope.setup()`
-        --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
         extensions = {
           ["ui-select"] = {
             require("telescope.themes").get_dropdown(),
           },
         },
       }
-
-      -- Enable telescope extensions, if they are installed
       pcall(require("telescope").load_extension, "fzf")
       pcall(require("telescope").load_extension, "ui-select")
-
-      -- See `:help telescope.builtin`
-      local builtin = require "telescope.builtin"
-      vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
-      vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[S]earch [K]eymaps" })
-      vim.keymap.set("n", "<leader>sf", builtin.find_files, { desc = "[S]earch [F]iles" })
-      vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]earch [S]elect Telescope" })
-      vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
-      vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
-      vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
-      vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[S]earch [R]esume" })
-      vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
-      vim.keymap.set("n", "<leader>sm", builtin.git_status, { desc = "[S]earch [M]odified files" })
-
-      -- Slightly advanced example of overriding default behavior and theme
-      vim.keymap.set("n", "<leader>/", function()
-        -- You can pass additional configuration to telescope to change theme, layout, etc.
-        builtin.current_buffer_fuzzy_find(require("telescope.themes").get_dropdown {
-          winblend = 10,
-          previewer = false,
-        })
-      end, { desc = "[/] Fuzzily search in current buffer" })
-
-      -- Also possible to pass additional configuration options.
-      --  See `:help telescope.builtin.live_grep()` for information about particular keys
-      vim.keymap.set("n", "<leader>s/", function()
-        builtin.live_grep {
-          grep_open_files = true,
-          prompt_title = "Live Grep in Open Files",
-        }
-      end, { desc = "[S]earch [/] in Open Files" })
-
-      -- Shortcut for searching your neovim configuration files
-      vim.keymap.set("n", "<leader>sn", function()
-        builtin.find_files { cwd = vim.fn.stdpath "config" }
-      end, { desc = "[S]earch [N]eovim files" })
     end,
   },
 
@@ -762,6 +797,15 @@ require("lazy").setup {
         -- javascript = { { "prettierd", "prettier" } },
       },
     },
+    keys = {
+      {
+        "<leader>cf",
+        function()
+          require("conform").format { async = true, lsp_fallback = true }
+        end,
+        desc = "[C]ode [F]ormat",
+      },
+    },
   },
 
   { -- Autocompletion
@@ -788,6 +832,7 @@ require("lazy").setup {
       --  into multiple repos for maintenance purposes.
       "hrsh7th/cmp-nvim-lsp",
       "hrsh7th/cmp-path",
+      "hrsh7th/cmp-buffer",
 
       -- If you want to add a bunch of pre-configured snippets,
       --    you can use this plugin to help you. It even has snippets
@@ -852,6 +897,7 @@ require("lazy").setup {
           { name = "nvim_lsp" },
           { name = "luasnip" },
           { name = "path" },
+          { name = "buffer", keyword_length = 3 },
         },
       }
     end,
@@ -882,40 +928,32 @@ require("lazy").setup {
     opts = { signs = false },
   },
 
-  { -- Collection of various small independent plugins/modules
-    "echasnovski/mini.nvim",
+  -- mini.ai: Better Around/Inside textobjects (va), ci', etc.)
+  {
+    "echasnovski/mini.ai",
+    event = { "BufReadPre", "BufNewFile" },
+    opts = { n_lines = 500 },
+  },
+
+  -- mini.surround: Add/delete/replace surroundings (saiw), sd', sr)')
+  {
+    "echasnovski/mini.surround",
+    event = { "BufReadPre", "BufNewFile" },
+    opts = {},
+  },
+
+  -- mini.statusline: Simple statusline (loads immediately for UI)
+  {
+    "echasnovski/mini.statusline",
+    lazy = false,
+    priority = 999,
     config = function()
-      -- Better Around/Inside textobjects
-      --
-      -- Examples:
-      --  - va)  - [V]isually select [A]round [)]paren
-      --  - yinq - [Y]ank [I]nside [N]ext [']quote
-      --  - ci'  - [C]hange [I]nside [']quote
-      require("mini.ai").setup { n_lines = 500 }
-
-      -- Add/delete/replace surroundings (brackets, quotes, etc.)
-      --
-      -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
-      -- - sd'   - [S]urround [D]elete [']quotes
-      -- - sr)'  - [S]urround [R]eplace [)] [']
-      require("mini.surround").setup()
-
-      -- Simple and easy statusline.
-      --  You could remove this setup call if you don't like it,
-      --  and try some other statusline plugin
       local statusline = require "mini.statusline"
       statusline.setup()
-
-      -- You can configure sections in the statusline by overriding their
-      -- default behavior. For example, here we disable the section for
-      -- cursor information because line numbers are already enabled
       ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_location = function()
         return ""
       end
-
-      -- ... and there is more!
-      --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
 
@@ -1000,11 +1038,11 @@ require("lazy").setup {
       -- Integrate with telescope for symbol searching
       require("telescope").load_extension "aerial"
 
-      -- Document the new keymaps in which-key
-      require("which-key").register {
-        ["<leader>a"] = { name = "Code [A]erial", _ = "which_key_ignore" },
-        ["[s"] = "Previous symbol",
-        ["]s"] = "Next symbol",
+      -- Document the new keymaps in which-key (v3 API)
+      require("which-key").add {
+        { "<leader>a", group = "Code [A]erial" },
+        { "[s", desc = "Previous symbol" },
+        { "]s", desc = "Next symbol" },
       }
     end,
     -- Only load aerial when you open a suitable file
@@ -1127,10 +1165,12 @@ require("lazy").setup {
   },
   { -- Highlight, edit, and navigate code
     "nvim-treesitter/nvim-treesitter",
+    event = { "BufReadPost", "BufNewFile" },
     dependencies = {
       "nvim-treesitter/nvim-treesitter-textobjects",
     },
     build = ":TSUpdate",
+    main = "nvim-treesitter.configs",
     config = function()
       -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
 
@@ -1205,10 +1245,19 @@ require("lazy").setup {
         lint.linters.ruff.args = { "run", "ruff", "check", "--output-format", "json", "-" }
       end
 
-      -- Auto-lint on events
-      vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
+      -- Auto-lint on events (debounced, removed BufEnter to avoid excessive linting)
+      vim.api.nvim_create_autocmd({ "BufWritePost", "InsertLeave" }, {
         callback = function()
-          lint.try_lint()
+          -- Debounce lint calls
+          local timer = vim.uv.new_timer()
+          timer:start(
+            100,
+            0,
+            vim.schedule_wrap(function()
+              lint.try_lint()
+              timer:close()
+            end)
+          )
         end,
       })
 
@@ -1217,7 +1266,7 @@ require("lazy").setup {
     end,
   },
 
-  -- Modern test runner
+  -- Modern test runner (lazy-loaded on keymaps)
   {
     "nvim-neotest/neotest",
     dependencies = {
@@ -1227,19 +1276,50 @@ require("lazy").setup {
       "nvim-neotest/neotest-python",
       "fredrikaverpil/neotest-golang",
     },
+    keys = {
+      {
+        "<leader>tt",
+        function()
+          require("neotest").run.run()
+        end,
+        desc = "Run nearest test",
+      },
+      {
+        "<leader>tf",
+        function()
+          require("neotest").run.run(vim.fn.expand "%")
+        end,
+        desc = "Run test file",
+      },
+      {
+        "<leader>td",
+        function()
+          require("neotest").run.run { strategy = "dap" }
+        end,
+        desc = "Debug nearest test",
+      },
+      {
+        "<leader>ts",
+        function()
+          require("neotest").summary.toggle()
+        end,
+        desc = "Toggle test summary",
+      },
+      {
+        "<leader>to",
+        function()
+          require("neotest").output.open { enter = true }
+        end,
+        desc = "Show test output",
+      },
+    },
     config = function()
       require("neotest").setup {
         adapters = {
           require "neotest-python" {
             dap = { justMyCode = false },
             runner = "pytest",
-            python = function()
-              -- Use uv python if available
-              if vim.fn.executable "uv" == 1 then
-                return vim.fn.system("uv run which python"):gsub("\n", "")
-              end
-              return vim.fn.exepath "python3" or vim.fn.exepath "python"
-            end,
+            python = get_uv_python,
           },
           require "neotest-golang" {
             go_test_args = { "-v", "-race", "-count=1", "-timeout=60s" },
@@ -1247,37 +1327,10 @@ require("lazy").setup {
           },
         },
       }
-
-      -- Test keybindings
-      vim.keymap.set("n", "<leader>tt", "<cmd>lua require('neotest').run.run()<cr>", { desc = "Run nearest test" })
-      vim.keymap.set(
-        "n",
-        "<leader>tf",
-        "<cmd>lua require('neotest').run.run(vim.fn.expand('%'))<cr>",
-        { desc = "Run test file" }
-      )
-      vim.keymap.set(
-        "n",
-        "<leader>td",
-        "<cmd>lua require('neotest').run.run({strategy = 'dap'})<cr>",
-        { desc = "Debug nearest test" }
-      )
-      vim.keymap.set(
-        "n",
-        "<leader>ts",
-        "<cmd>lua require('neotest').summary.toggle()<cr>",
-        { desc = "Toggle test summary" }
-      )
-      vim.keymap.set(
-        "n",
-        "<leader>to",
-        "<cmd>lua require('neotest').output.open({ enter = true })<cr>",
-        { desc = "Show test output" }
-      )
     end,
   },
 
-  -- Core debugging
+  -- Core debugging (lazy-loaded on keymaps)
   {
     "mfussenegger/nvim-dap",
     dependencies = {
@@ -1285,6 +1338,57 @@ require("lazy").setup {
       "theHamsta/nvim-dap-virtual-text",
       "nvim-neotest/nvim-nio",
       "williamboman/mason.nvim",
+    },
+    keys = {
+      {
+        "<leader>db",
+        function()
+          require("dap").toggle_breakpoint()
+        end,
+        desc = "Toggle breakpoint",
+      },
+      {
+        "<leader>dc",
+        function()
+          require("dap").continue()
+        end,
+        desc = "Continue/Start debugging",
+      },
+      {
+        "<leader>di",
+        function()
+          require("dap").step_into()
+        end,
+        desc = "Step into",
+      },
+      {
+        "<leader>do",
+        function()
+          require("dap").step_over()
+        end,
+        desc = "Step over",
+      },
+      {
+        "<leader>dO",
+        function()
+          require("dap").step_out()
+        end,
+        desc = "Step out",
+      },
+      {
+        "<leader>dr",
+        function()
+          require("dap").repl.open()
+        end,
+        desc = "Open debug REPL",
+      },
+      {
+        "<leader>dt",
+        function()
+          require("dapui").toggle()
+        end,
+        desc = "Toggle debug UI",
+      },
     },
     config = function()
       local dap = require "dap"
@@ -1297,20 +1401,6 @@ require("lazy").setup {
       dap.listeners.after.event_initialized["dapui_config"] = dapui.open
       dap.listeners.before.event_terminated["dapui_config"] = dapui.close
       dap.listeners.before.event_exited["dapui_config"] = dapui.close
-
-      -- Debug keybindings
-      vim.keymap.set(
-        "n",
-        "<leader>db",
-        "<cmd>lua require('dap').toggle_breakpoint()<cr>",
-        { desc = "Toggle breakpoint" }
-      )
-      vim.keymap.set("n", "<leader>dc", "<cmd>lua require('dap').continue()<cr>", { desc = "Continue/Start debugging" })
-      vim.keymap.set("n", "<leader>di", "<cmd>lua require('dap').step_into()<cr>", { desc = "Step into" })
-      vim.keymap.set("n", "<leader>do", "<cmd>lua require('dap').step_over()<cr>", { desc = "Step over" })
-      vim.keymap.set("n", "<leader>dO", "<cmd>lua require('dap').step_out()<cr>", { desc = "Step out" })
-      vim.keymap.set("n", "<leader>dr", "<cmd>lua require('dap').repl.open()<cr>", { desc = "Open debug REPL" })
-      vim.keymap.set("n", "<leader>dt", "<cmd>lua require('dapui').toggle()<cr>", { desc = "Toggle debug UI" })
     end,
   },
 
@@ -1320,15 +1410,7 @@ require("lazy").setup {
     ft = "python",
     dependencies = { "mfussenegger/nvim-dap" },
     config = function()
-      -- Use uv python for debugging
-      local python_path = function()
-        if vim.fn.executable "uv" == 1 then
-          return vim.fn.system("uv run which python"):gsub("\n", "")
-        end
-        return vim.fn.exepath "python3" or vim.fn.exepath "python"
-      end
-
-      require("dap-python").setup(python_path())
+      require("dap-python").setup(get_uv_python())
 
       -- Python-specific debug keybindings
       vim.keymap.set(
@@ -1383,7 +1465,35 @@ require("lazy").setup {
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
   -- { import = 'custom.plugins' },
-}
+}, {
+  -- Performance optimizations
+  performance = {
+    cache = {
+      enabled = true,
+    },
+    rtp = {
+      -- Disable unused built-in plugins
+      disabled_plugins = {
+        "gzip",
+        "matchit",
+        "matchparen",
+        "netrwPlugin",
+        "tarPlugin",
+        "tohtml",
+        "tutor",
+        "zipPlugin",
+      },
+    },
+  },
+  -- Check for plugin updates weekly
+  checker = {
+    enabled = false, -- Disable auto-check to avoid startup delay
+  },
+  -- Don't notify on config changes
+  change_detection = {
+    notify = false,
+  },
+})
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
