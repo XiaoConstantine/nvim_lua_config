@@ -190,6 +190,20 @@ end, { desc = "Go to previous [D]iagnostic message" })
 vim.keymap.set("n", "]d", function()
   vim.diagnostic.jump { count = 1 }
 end, { desc = "Go to next [D]iagnostic message" })
+-- Severity-filtered navigation (errors only)
+vim.keymap.set("n", "[e", function()
+  vim.diagnostic.jump { count = -1, severity = vim.diagnostic.severity.ERROR }
+end, { desc = "Go to previous [E]rror" })
+vim.keymap.set("n", "]e", function()
+  vim.diagnostic.jump { count = 1, severity = vim.diagnostic.severity.ERROR }
+end, { desc = "Go to next [E]rror" })
+-- Severity-filtered navigation (warnings only)
+vim.keymap.set("n", "[w", function()
+  vim.diagnostic.jump { count = -1, severity = vim.diagnostic.severity.WARN }
+end, { desc = "Go to previous [W]arning" })
+vim.keymap.set("n", "]w", function()
+  vim.diagnostic.jump { count = 1, severity = vim.diagnostic.severity.WARN }
+end, { desc = "Go to next [W]arning" })
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
 
