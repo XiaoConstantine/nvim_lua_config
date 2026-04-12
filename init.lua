@@ -111,6 +111,9 @@ local function get_uv_python()
   return _cached_uv_python
 end
 
+-- Keep Tree-sitter parsers in a writable runtime path entry, separate from plugins.
+local ts_parser_root = vim.fn.stdpath "data" .. "/treesitter"
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -176,9 +179,10 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
--- Treesitter folding (disabled by default, enable with zi)
-vim.opt.foldmethod = "expr"
-vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+-- Tree-sitter folding has been unstable on Neovim 0.12 with some parser/query combinations.
+-- Keep folding manual by default; you can still enable another fold method later per buffer.
+vim.opt.foldmethod = "manual"
+vim.opt.foldexpr = "0"
 vim.opt.foldtext = ""
 vim.opt.foldenable = false
 vim.opt.foldlevel = 99
@@ -313,8 +317,9 @@ require("lazy").setup({
       current_line_blame = true,
       -- Customize the blame line format
       current_line_blame_formatter = "<author>, <author_time:%Y-%m-%d> - <summary>",
-      -- Show blame info with a slight delay (in milliseconds)
-      current_line_blame_delay = 500,
+      current_line_blame_opts = {
+        delay = 500,
+      },
       -- Add keymaps for git operations
       on_attach = function(bufnr)
         local gs = package.loaded.gitsigns
@@ -1143,7 +1148,8 @@ require("lazy").setup({
   },
   { -- Highlight, edit, and navigate code
     "nvim-treesitter/nvim-treesitter",
-    event = { "BufReadPost", "BufNewFile" },
+    branch = "master",
+    lazy = false,
     dependencies = {
       "nvim-treesitter/nvim-treesitter-textobjects",
     },
@@ -1154,9 +1160,11 @@ require("lazy").setup({
 
       ---@diagnostic disable-next-line: missing-fields
       require("nvim-treesitter.configs").setup {
+        parser_install_dir = ts_parser_root,
         ensure_installed = { "bash", "c", "html", "lua", "markdown", "vim", "vimdoc", "python", "go", "rust" },
-        -- Autoinstall languages that are not installed
-        auto_install = true,
+        -- nvim-treesitter does not support lazy-loading, and parser installs
+        -- should only be attempted automatically when the tree-sitter CLI exists.
+        auto_install = vim.fn.executable "tree-sitter" == 1,
         highlight = { enable = true },
         indent = { enable = true },
         textobjects = {
@@ -1450,6 +1458,9 @@ require("lazy").setup({
       enabled = true,
     },
     rtp = {
+      paths = {
+        ts_parser_root,
+      },
       -- Disable unused built-in plugins
       disabled_plugins = {
         "gzip",
