@@ -153,6 +153,14 @@ vim.opt.timeoutlen = 300
 vim.opt.splitright = true
 vim.opt.splitbelow = true
 
+-- Neovim 0.12: use consistent borders for built-in floating windows and popup menus.
+-- Guard the options so this config still loads on older remote Neovim installs.
+if vim.fn.has "nvim-0.12" == 1 then
+  vim.opt.winborder = "rounded"
+  vim.opt.pumborder = "rounded"
+  vim.opt.completeopt = { "menu", "menuone", "popup", "noinsert" }
+end
+
 -- Sets how neovim will display certain whitespace in the editor.
 --  See `:help 'list'`
 --  and `:help 'listchars'`
@@ -804,6 +812,12 @@ require("lazy").setup({
       -- See `:help cmp`
       local cmp = require "cmp"
       local luasnip = require "luasnip"
+      local completion_completeopt = "menu,menuone,noinsert"
+
+      if vim.fn.has "nvim-0.12" == 1 then
+        completion_completeopt = "menu,menuone,popup,noinsert"
+      end
+
       luasnip.config.setup {}
 
       cmp.setup {
@@ -812,7 +826,11 @@ require("lazy").setup({
             luasnip.lsp_expand(args.body)
           end,
         },
-        completion = { completeopt = "menu,menuone,noinsert" },
+        completion = { completeopt = completion_completeopt },
+        window = {
+          completion = cmp.config.window.bordered(),
+          documentation = cmp.config.window.bordered(),
+        },
 
         -- For an understanding of why these mappings were
         -- chosen, you will need to read `:help ins-completion`
