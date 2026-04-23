@@ -656,6 +656,8 @@ require("lazy").setup({
       -- Extended capabilities for nvim-cmp
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
+      local zig_exe = vim.fn.exepath "zig"
+      local zls_exe = vim.fn.exepath "zls"
 
       -- Neovim 0.11+ LSP configuration using vim.lsp.config()
       -- This is the new declarative way to configure LSP servers
@@ -709,6 +711,15 @@ require("lazy").setup({
         },
       })
 
+      vim.lsp.config("zls", {
+        capabilities = capabilities,
+        cmd = { zls_exe ~= "" and zls_exe or "zls" },
+        root_markers = { "zls.json", "build.zig", ".git" },
+        settings = {
+          zls = zig_exe ~= "" and { zig_exe_path = zig_exe } or {},
+        },
+      })
+
       vim.lsp.config("lua_ls", {
         capabilities = capabilities,
         settings = {
@@ -729,7 +740,7 @@ require("lazy").setup({
       })
 
       -- Enable configured LSP servers (Neovim 0.11+ API)
-      vim.lsp.enable { "gopls", "pyright", "ruff", "rust_analyzer", "lua_ls" }
+      vim.lsp.enable { "gopls", "pyright", "ruff", "rust_analyzer", "zls", "lua_ls" }
 
       -- Mason setup for installing LSP servers and tools
       require("mason").setup()
@@ -747,6 +758,9 @@ require("lazy").setup({
       }
       require("mason-tool-installer").setup { ensure_installed = ensure_installed }
 
+      -- Keep zls outside Mason so it can be version-matched to the active Zig toolchain.
+      -- Install it via Homebrew or another system package manager.
+
       -- Mason-lspconfig is still useful for automatic installation triggers
       require("mason-lspconfig").setup()
     end,
@@ -762,6 +776,7 @@ require("lazy").setup({
       },
       formatters_by_ft = {
         lua = { "stylua" },
+        zig = { "zigfmt" },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -1161,7 +1176,7 @@ require("lazy").setup({
       ---@diagnostic disable-next-line: missing-fields
       require("nvim-treesitter.configs").setup {
         parser_install_dir = ts_parser_root,
-        ensure_installed = { "bash", "c", "html", "lua", "markdown", "vim", "vimdoc", "python", "go", "rust" },
+        ensure_installed = { "bash", "c", "html", "lua", "markdown", "vim", "vimdoc", "python", "go", "rust", "zig" },
         -- nvim-treesitter does not support lazy-loading, and parser installs
         -- should only be attempted automatically when the tree-sitter CLI exists.
         auto_install = vim.fn.executable "tree-sitter" == 1,
