@@ -114,6 +114,20 @@ end
 -- Keep Tree-sitter parsers in a writable runtime path entry, separate from plugins.
 local ts_parser_root = vim.fn.stdpath "data" .. "/treesitter"
 
+local function get_mason_or_path_executable(name)
+  local mason_exe = vim.fn.stdpath "data" .. "/mason/bin/" .. name
+  if vim.fn.executable(mason_exe) == 1 then
+    return mason_exe
+  end
+
+  local path_exe = vim.fn.exepath(name)
+  if path_exe ~= "" then
+    return path_exe
+  end
+
+  return name
+end
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -218,6 +232,15 @@ vim.keymap.set("n", "]w", function()
 end, { desc = "Go to next [W]arning" })
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
+vim.keymap.set("n", "K", function()
+  for _, client in ipairs(vim.lsp.get_clients { bufnr = 0 }) do
+    if client:supports_method(vim.lsp.protocol.Methods.textDocument_hover) then
+      vim.lsp.buf.hover()
+      return
+    end
+  end
+  vim.notify("No LSP hover available for this buffer", vim.log.levels.INFO)
+end, { desc = "Hover Documentation" })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -656,6 +679,7 @@ require("lazy").setup({
       -- Extended capabilities for nvim-cmp
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
+      local ruff_exe = get_mason_or_path_executable "ruff"
       local zig_exe = vim.fn.exepath "zig"
       local zls_exe = vim.fn.exepath "zls"
 
@@ -694,6 +718,9 @@ require("lazy").setup({
 
       vim.lsp.config("ruff", {
         capabilities = capabilities,
+        -- Mason currently has Ruff 0.4.x here, whose server requires --preview.
+        cmd = { ruff_exe, "server", "--preview" },
+        init_options = vim.empty_dict(),
         on_attach = function(client, bufnr)
           -- Disable hover in favor of Pyright
           client.server_capabilities.hoverProvider = false
@@ -1027,8 +1054,8 @@ require("lazy").setup({
       }
 
       -- Set up keymaps for Aerial
-      -- Toggle aerial window with <leader>a
-      vim.keymap.set("n", "<leader>a", "<cmd>AerialToggle!<CR>", { desc = "Toggle code outline" })
+      -- Toggle aerial window with <leader>co
+      vim.keymap.set("n", "<leader>co", "<cmd>AerialToggle!<CR>", { desc = "Toggle code outline" })
       -- Jump to previous/next symbol
       vim.keymap.set("n", "[s", "<cmd>AerialPrev<CR>", { desc = "Previous symbol" })
       vim.keymap.set("n", "]s", "<cmd>AerialNext<CR>", { desc = "Next symbol" })
@@ -1038,7 +1065,7 @@ require("lazy").setup({
 
       -- Document the new keymaps in which-key (v3 API)
       require("which-key").add {
-        { "<leader>a", group = "Code [A]erial" },
+        { "<leader>co", desc = "Toggle code outline" },
         { "[s", desc = "Previous symbol" },
         { "]s", desc = "Next symbol" },
       }
@@ -1159,6 +1186,9 @@ require("lazy").setup({
 
       -- Set up the - keymap to open oil
       vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
+      vim.keymap.set("n", "<leader>a", function()
+        require("oil").toggle_float()
+      end, { desc = "Open file explorer" })
     end,
   },
   { -- Highlight, edit, and navigate code
@@ -1227,7 +1257,7 @@ require("lazy").setup({
     end,
   },
 
-  -- Enhanced linting with uv ruff and golangci-lint
+  -- Enhanced linting with ruff and golangci-lint
   {
     "mfussenegger/nvim-lint",
     event = { "BufReadPre", "BufNewFile" },
@@ -1240,11 +1270,7 @@ require("lazy").setup({
         go = { "golangcilint" },
       }
 
-      -- Use uv ruff if available
-      if vim.fn.executable "uv" == 1 then
-        lint.linters.ruff.cmd = "uv"
-        lint.linters.ruff.args = { "run", "ruff", "check", "--output-format", "json", "-" }
-      end
+      lint.linters.ruff.cmd = get_mason_or_path_executable "ruff"
 
       -- Auto-lint on events (debounced, removed BufEnter to avoid excessive linting)
       vim.api.nvim_create_autocmd({ "BufWritePost", "InsertLeave" }, {
