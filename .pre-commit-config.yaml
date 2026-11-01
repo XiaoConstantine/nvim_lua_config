@@ -1,3 +1,4 @@
+exclude: ^rex/ # Rex terminal config, not Neovim Lua
 repos:
 - repo: https://github.com/JohnnyMorganz/StyLua
   rev: v0.16.1

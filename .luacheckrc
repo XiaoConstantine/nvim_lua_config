@@ -4,7 +4,8 @@ codes = true
 
 exclude_files = {
   "plugin/",
-  "lua/utils"
+  "lua/utils",
+  "rex/" -- Rex terminal config, not Neovim Lua
 }
 
 -- Glorious list of warnings: https://luacheck.readthedocs.io/en/stable/warnings.html
