@@ -1,5 +1,6 @@
 -- Review an agent's work in a floating Hunk and hand your notes back to it.
 --   prefix v on an agent's pane  open Hunk, live on everything since the base
+--   prefix V on an agent's pane  browse recent commits in Hunk and review any of them
 --   c on a line, ctrl+s          write a note
 --   prefix v inside Hunk         send the notes; the agent replies under each one
 -- Closing Hunk discards the notes, so send them first. review_watcher.lua opens a
@@ -38,7 +39,7 @@ local function type_into(session_id, block_id, text)
 end
 
 -- The Hunk session running in a pop-up: the one whose process descends from the pop-up's,
--- so another Hunk open on the same repo isn't picked by mistake.
+-- so another Hunk open on the same repo isn't picked by mistake. Returns its ID and title.
 local function hunk_session(session_id, popup_id)
   local p = check(rex.block.call(terminal, "process", { session_id = session_id, block_id = popup_id }))
   local root_pid = p.child and p.child.pid
@@ -47,7 +48,7 @@ local function hunk_session(session_id, popup_id)
   for _, s in ipairs(list) do
     local pid = s.pid
     for _ = 1, 8 do
-      if pid == root_pid then return s.sessionId end
+      if pid == root_pid then return s.sessionId, s.title end
       local ps = rex.exec({ "/bin/ps", "-o", "ppid=", "-p", tostring(pid) })
       pid = ps and ps.ok and tonumber(ps.stdout:match("%d+")) or nil
       if pid == nil or pid <= 1 then break end
@@ -57,8 +58,10 @@ end
 
 -- Prefix v inside a Hunk pop-up: save the notes, then point the agent at them.
 local function send_notes(session_id, popup_id, review)
-  local id = hunk_session(session_id, popup_id)
+  local id, title = hunk_session(session_id, popup_id)
   local target = id or ("--repo " .. review.root)
+  -- A review opened from the history is titled with its repo and range, such as "app 95fa7f7..ab06bdb".
+  local range = review.history and title and title:match("^%S+%s+(.+)") or review.range
   local argv = { hunk, "session", "comment", "list", unpack(id and { id } or { "--repo", review.root }) }
   for _, arg in ipairs({ "--type", "user", "--json" }) do argv[#argv + 1] = arg end
   local r = check(rex.exec(argv, { cwd = review.root, env = { PATH = hunk_path } }))
@@ -81,7 +84,7 @@ local function send_notes(session_id, popup_id, review)
     "I left %d review note(s) on %s in the open Hunk window (copy: %s). Use the hunk-review skill: "
       .. "read them with `hunk session comment list %s --type user --json`, address each one, "
       .. "and reply under it with `hunk session comment add %s --reply-to <id> --summary ...`.",
-    #list, review.range, path, target, target
+    #list, range, path, target, target
   ))
   return { sent = #list, saved = path }
 end
@@ -93,8 +96,8 @@ rex.action{
   category    = "Review",
   keywords    = "review diff hunk notes comments agent claude codex commit",
   -- base reviews everything since that commit; without it, the uncommitted changes
-  -- or else the last commit.
-  args        = { session_id = "string?", block_id = "string?", base = "string?" },
+  -- or else the last commit. history browses recent commits instead.
+  args        = { session_id = "string?", block_id = "string?", base = "string?", history = "boolean?" },
   run         = function(ctx, args)
     local session_id = args.session_id or ctx.session_id
     local block_id = args.block_id or ctx.block_id
@@ -111,19 +114,24 @@ rex.action{
     local root = cwd and git_out(cwd, "rev-parse", "--show-toplevel")
     if root == nil then error("the pane isn't in a git repository", 0) end
 
-    -- Diff the base against the working tree and keep watching, so the agent's fixes show up.
-    local dirty = git_out(root, "status", "--porcelain") ~= ""
-    local base = args.base or git_out(root, "rev-parse", dirty and "HEAD" or "HEAD~1")
-    local hunk_args, range
-    if base then
-      hunk_args, range = { "diff", base, "--watch" }, base:sub(1, 7) .. "..working tree"
+    local hunk_args, range, label
+    if args.history then
+      -- Browse recent commits: Enter reviews one, v selects a range, q goes back to the list.
+      hunk_args, range, label = { "log" }, "the commits I opened from the history", "Review history"
     else
-      hunk_args, range = { "show", "HEAD" }, "the first commit"
+      -- Diff the base against the working tree and keep watching, so the agent's fixes show up.
+      local dirty = git_out(root, "status", "--porcelain") ~= ""
+      local base = args.base or git_out(root, "rev-parse", dirty and "HEAD" or "HEAD~1")
+      if base then
+        hunk_args = { "diff", base, "--watch", "--agent-notes", "--sidebar" }
+        range = base:sub(1, 7) .. "..working tree"
+      else
+        hunk_args, range = { "show", "HEAD", "--agent-notes", "--sidebar" }, "the first commit"
+      end
+      label = "Review " .. range
     end
     local command = { "/usr/bin/env", "PATH=" .. hunk_path, hunk }
     for _, arg in ipairs(hunk_args) do command[#command + 1] = arg end
-    command[#command + 1] = "--agent-notes"
-    command[#command + 1] = "--sidebar"
 
     local layer = check(rex.session.new_layer{
       session_id = session_id,
@@ -132,13 +140,14 @@ rex.action{
       focus      = true,
       layout     = rex.layout.block{
         flavor  = shell,
-        label   = "Review " .. range,
+        label   = label,
         options = { cwd = root, shell = "none", command = command },
       },
     })
-    popups[layer.block_ids[1]] = { agent = block_id, root = root, range = range }
+    popups[layer.block_ids[1]] = { agent = block_id, root = root, range = range, history = args.history }
     return layer
   end,
 }
 
 rex.bind("ctrl+b>v", "review_agent")
+rex.bind("ctrl+b>shift+v", "review_agent", { history = true })
