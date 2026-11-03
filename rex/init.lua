@@ -103,3 +103,6 @@ rex.bind("ctrl+b>shift+d", "dev_session")
 
 -- Session notebook (prefix N) and compact native Activity popover (prefix A).
 require("notes_dashboard")
+
+-- Review an agent's changes in a floating Hunk and send your notes back (prefix v).
+require("agent_review")
