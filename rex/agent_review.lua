@@ -123,6 +123,7 @@ rex.action{
     local command = { "/usr/bin/env", "PATH=" .. hunk_path, hunk }
     for _, arg in ipairs(hunk_args) do command[#command + 1] = arg end
     command[#command + 1] = "--agent-notes"
+    command[#command + 1] = "--sidebar"
 
     local layer = check(rex.session.new_layer{
       session_id = session_id,
