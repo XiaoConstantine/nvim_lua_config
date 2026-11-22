@@ -101,6 +101,46 @@ rex.action{
 
 rex.bind("ctrl+b>shift+d", "dev_session")
 
+-- Puck (prefix a): a Claude Code dispatcher that watches every agent across
+-- sessions, says what needs you, and takes you there. See puck/CLAUDE.md.
+local puck_dir = os.getenv("HOME") .. "/.config/rex/puck"
+
+rex.action{
+  name        = "puck",
+  title       = "Go to Puck (Agent Dispatcher)",
+  description = "Shows the Puck session, starting it if it isn't running.",
+  category    = "Sessions",
+  keywords    = "puck agents dispatcher status inbox claude codex pi",
+  args        = { show = "boolean?" },
+  run         = function(ctx, args)
+    local show = args.show ~= false
+    local list = rex.call("session.list", {}) or { sessions = {} }
+    for _, s in ipairs(list.sessions or {}) do
+      if s.label == "puck" then
+        if show then
+          rex.client.queue("session.expand", { session_id = s.session_id })
+          rex.client.queue("session.select", { session_id = s.session_id })
+        end
+        return { session_id = s.session_id, created = false }
+      end
+    end
+    local s, err = rex.call("session.create", {
+      label = "puck",
+      initial_windows = {
+        { window_label = "puck", layout = rex.layout.block{
+            flavor  = shell,
+            options = { cwd = puck_dir, initial_input = "claude 'Start your watch, then tell me what needs me.'\r" },
+        } },
+      },
+    })
+    if err ~= nil then error(err, 0) end
+    if show then rex.client.queue("session.select", { session_id = s.session_id }) end
+    return { session_id = s.session_id, created = true }
+  end,
+}
+
+rex.bind("ctrl+b>a", "puck")
+
 -- Session notebook (prefix N) and compact native Activity popover (prefix A).
 require("notes_dashboard")
 

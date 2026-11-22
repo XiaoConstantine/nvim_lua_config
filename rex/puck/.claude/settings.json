@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./agents)",
+      "Bash(./agents --tail:*)",
+      "Bash(./agents --json:*)",
+      "Bash(./agents status:*)",
+      "Bash(./agents peek:*)",
+      "Bash(./agents go:*)",
+      "Bash(./agents threads:*)",
+      "Bash(./agents show:*)",
+      "Bash(./agents search:*)",
+      "Bash(./agents topic:*)",
+      "Bash(./agents name:*)",
+      "Bash(./agents unarchive:*)",
+      "Bash(./agents snapshot:*)",
+      "Bash(./agents restore --dry-run:*)",
+      "Bash(./agents tasks:*)",
+      "Bash(./agents result:*)",
+      "Bash(./agents wait:*)"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+#!/bin/sh
+# Runs agents.lua in Rex, passing the command line through untouched.
+# `wait` listens for events from every session, so it runs with --all.
+dir=$(cd "$(dirname "$0")" && pwd -P)
+all=
+[ "$1" = wait ] && all=--all
+PUCK_ARGV=$(printf '%s\037' "$@") exec rex do "$dir/agents.lua" $all
