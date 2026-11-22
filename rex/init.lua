@@ -8,8 +8,7 @@
 -- hyperlinks, clipboard, extended-keys, and the S-Enter remap (Claude Code
 -- turns on the kitty keyboard protocol, so Rex sends it CSI 13;2u itself).
 --
--- No Rex equivalent: vi copy mode (Find… in the command palette searches the
--- scrollback) and the status bar.
+-- No Rex equivalent: the status bar.
 
 local terminal = "com.superlogical.terminal"
 local shell = "com.superlogical.terminal.shell"
@@ -45,6 +44,28 @@ rex.bind("ctrl+b>o", "pane.focus_next")
 rex.bind("ctrl+b>z", "pane.zoom")
 rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>shift+1", "pane.move_to_new_tab") -- ! (break-pane)
+
+-- tmux's "last" keys: last-window, last-pane, switch-client -l.
+rex.bind("ctrl+b>l", "client.tab.recent")
+rex.bind("ctrl+b>;", "pane.focus_back")
+rex.bind("ctrl+b>shift+l", "session.back")
+
+-- vi copy mode, as in tmux (prefix [). Rex's defaults inside it: h/j/k/l w/b/e,
+-- v (char), shift+v (line), ctrl+v (block), / ? n N, y or Enter to yank, q to leave.
+rex.bind("ctrl+b>[", "pane.copy_mode.enter")
+
+-- Resize mode (prefix e): h/j/k/l or arrows resize, shift for big steps, = balances,
+-- z zooms, Escape or Enter leaves. Exclusive, so stray keys don't reach the pane.
+rex.mode("resize", { exclusive = true })
+rex.bind("ctrl+b>e", "client.mode.enter", { name = "resize" })
+for key, dir in pairs({ h = "left", j = "down", k = "up", l = "right",
+                        left = "left", down = "down", up = "up", right = "right" }) do
+  rex.bind("resize/" .. key, "pane.resize", { direction = dir })
+  rex.bind("resize/shift+" .. key, "pane.resize", { direction = dir, amount = 15 })
+end
+rex.bind("resize/=", "pane.balance")
+rex.bind("resize/z", "pane.zoom")
+rex.bind("resize/enter", "client.mode.exit")
 
 -- Sessions.
 rex.bind("ctrl+b>s", "session.switch")
@@ -146,3 +167,25 @@ require("notes_dashboard")
 
 -- Review an agent's changes in a floating Hunk and send your notes back (prefix v).
 require("agent_review")
+
+-- Agent pickers: jump (prefix g), new (prefix C), second opinion (prefix O), tidy (prefix X).
+require("workflow")
+
+-- Long-running event scripts. rex.on only works in `rex do` scripts, so start each one
+-- detached unless it's already running. The [x] in the pattern, and leaving ".lua" out of
+-- sh's arguments, keep pgrep from matching the sh itself. Set an entry to false to stop
+-- starting it.
+local rex_bin = "/Users/xiao/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex"
+local autostart = {
+  review_watcher = true, -- open the Hunk review when an agent's turn adds commits
+}
+for name, on in pairs(autostart) do
+  if on then
+    local pattern = "rex do --all .*" .. name:sub(1, -2) .. "[" .. name:sub(-1) .. "]\\.lua"
+    rex.exec.start({ "/bin/sh", "-c",
+      -- Wait for the server to finish starting before connecting back to it.
+      'sleep 3; pgrep -f "$1" >/dev/null || exec "$2" do --all "$HOME/.config/rex/$3.lua"',
+      "sh", pattern, rex_bin, name,
+    }, { detach = true, stdout = false, stderr = false })
+  end
+end
