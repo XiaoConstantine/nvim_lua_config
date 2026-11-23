@@ -165,7 +165,8 @@ require("notes_dashboard")
 -- Review an agent's changes in a floating Hunk and send your notes back (prefix v).
 require("agent_review")
 
--- Agent pickers: jump (prefix g), new (prefix C), second opinion (prefix O), tidy (prefix X).
+-- Agent pickers: jump (prefix g), new (prefix C), second opinion (prefix O), tidy (prefix X),
+-- and saved prompts (prefix i).
 require("workflow")
 
 -- Long-running event scripts. rex.on only works in `rex do` scripts, so start each one
@@ -175,6 +176,7 @@ require("workflow")
 local rex_bin = "/Users/xiao/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS/rex"
 local autostart = {
   review_watcher = true, -- open the Hunk review when an agent's turn adds commits
+  tab_namer = true,      -- name default-named tabs after the agent conversation in them
 }
 for name, on in pairs(autostart) do
   if on then
