@@ -907,12 +907,14 @@ function M.close_block(session_id, block_id)
   if err then error(err, 0) end
 end
 
--- Open a new background tab in a session that types `command` into its shell.
+-- Open a new background tab in a session that runs `command` with the repo's direnv
+-- environment, then leaves a shell. Typing it into a fresh shell races devenv's loading
+-- screen; see envpane.lua.
 function M.open_tab(session_id, label, cwd, command)
   M.attach(session_id)
   local w, err = rex.call("session.new_window", {
     session_id = session_id, window_label = label, focus = false,
-    layout = rex.layout.block{ flavor = SHELL, options = { cwd = cwd, initial_input = command .. "\r" } },
+    layout = require("envpane").block(cwd, command),
   })
   if err then error(err, 0) end
   return w

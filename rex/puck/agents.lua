@@ -43,7 +43,8 @@ matches one agent, or a running thread's id. THREAD: a thread id from `threads`
 (cl-, cx-, pi-), a full session id, or words from its title.]]
 
 local dir = (debug.getinfo(1, "S").source or ""):match("^@?(.*/)") or (os.getenv("HOME") .. "/.config/rex/puck/")
-package.path = dir .. "?.lua;" .. package.path
+-- The parent directory holds envpane.lua, shared with the Rex config.
+package.path = dir .. "?.lua;" .. dir .. "../?.lua;" .. package.path
 local P = require("lib")
 local clip, ago = P.clip, P.ago
 
@@ -394,7 +395,7 @@ function C.resume()
     if not sid then fail("no session works in that repo yet; pass --session NAME") end
   end
   local label = clip(t.title, 32)
-  local w = P.open_tab(sid, label, t.cwd, 'eval "$(direnv export zsh 2>/dev/null)"; ' .. P.resume_command(t))
+  local w = P.open_tab(sid, label, t.cwd, P.resume_command(t))
   save_note(t, "archived", false)
   local sname = sid
   for _, s in ipairs(sessions) do if s.session_id == sid then sname = s.label or sid end end
@@ -466,7 +467,7 @@ function C.start()
   local id = P.new_task_id()
   local label = opt.label or clip(task, 28)
   local command = agent .. " " .. P.shell_quote(task)
-  local w = P.open_tab(sid, label, cwd, 'eval "$(direnv export zsh 2>/dev/null)"; ' .. command)
+  local w = P.open_tab(sid, label, cwd, command)
   local tasks = P.load_tasks()
   tasks[id] = { id = id, agent = agent, task = task, label = label, cwd = cwd, session = sname, session_id = sid,
     window_id = w.window_id, block_id = w.block_ids[1], started_at = os.time(), since = os.time(), status = "running" }
@@ -785,6 +786,14 @@ function C.restore()
       end
       rex.sleep(3)
       waited = waited + 3
+    end
+    -- Type only once the pane's shell is idle at its prompt: keys typed while its own
+    -- devenv load runs go to devenv's loading screen and are lost.
+    local calm = 0
+    for _ = 1, 120 do
+      calm = P.foreground(e.session_id, e.block_id):match("zsh$") and calm + 1 or 0
+      if calm >= 3 then break end
+      rex.sleep(0.5)
     end
     P.type_line(e.session_id, e.block_id, 'eval "$(direnv export zsh 2>/dev/null)"; ' .. e.resume)
     print(("%s  [%d/%d] %s %s in %s (free %d%%)"):format(os.date("%H:%M:%S"), i, #todo, e.agent, e.id, e.session, P.free_percent()))

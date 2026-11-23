@@ -75,8 +75,10 @@ rex.bind("ctrl+b>shift+0", "session.next") -- )
 
 -- The dev session, from tmux's session-created hook and
 -- ~/.tmux/scripts/dev-session.sh: Claude Code on the left, nvim on the right,
--- focus on Claude. Each program is typed into a shell, as send-keys did, so
--- quitting it leaves a shell in its pane.
+-- focus on Claude. Each program runs with the repo's direnv environment and leaves a
+-- shell in its pane when it quits, as send-keys did (see envpane.lua for why it isn't
+-- typed into the shell).
+local envpane = require("envpane")
 local function focused_dir(block_id)
   if block_id ~= nil then
     local p = rex.block.call(terminal, "process", { block_id = block_id })
@@ -96,12 +98,7 @@ rex.action{
   args        = { dir = "string?", show = "boolean?" },
   run         = function(ctx, args)
     local dir = args.dir or focused_dir(ctx.block_id)
-    local function pane(command)
-      return rex.layout.block{
-        flavor  = shell,
-        options = { cwd = dir, initial_input = command .. "\r" },
-      }
-    end
+    local function pane(command) return envpane.block(dir, command) end
 
     local s, err = rex.call("session.create", {
       label = dir:match("([^/]+)/*$") or "dev",

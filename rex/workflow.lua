@@ -9,7 +9,6 @@
 local P = require("puck.lib")
 
 local T = "com.superlogical.terminal"
-local SHELL = T .. ".shell"
 local HOME = os.getenv("HOME")
 local ICON = { blocked = "🔴", error = "❌", failed = "❌", done = "🟢", idle = "⚪", working = "🟡" }
 
@@ -22,18 +21,8 @@ local function q(s) return "'" .. tostring(s):gsub("'", "'\\''") .. "'" end
 local function tilde(p) return (p or ""):gsub("^" .. HOME:gsub("%p", "%%%0"), "~") end
 local function base(p) return (p or ""):gsub("/+$", ""):match("([^/]+)$") or p end
 
--- A pane that runs cmd in dir with the repo's direnv/devenv environment, then leaves a
--- login shell when it exits. Typing cmd into a fresh shell (initial_input) instead races
--- devenv's loading screen, which takes the keystrokes: "/" opens its process search.
-local function agent_block(dir, cmd, label)
-  return rex.layout.block{
-    flavor = SHELL, label = label,
-    options = { cwd = dir, shell = "none", command = { "/bin/zsh", "-lic",
-      'if [ -f .envrc ]; then direnv exec . /bin/sh -c "$1"; else /bin/sh -c "$1"; fi; exec /bin/zsh -l',
-      "zsh", cmd,
-    } },
-  }
-end
+-- Agents run under direnv exec rather than being typed into a shell; see envpane.lua.
+local agent_block = require("envpane").block
 
 local function cwd_of(session_id, block_id)
   if block_id == nil then return nil end
