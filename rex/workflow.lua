@@ -236,13 +236,52 @@ local function git_out(dir, ...)
   return (r.stdout:gsub("%s+$", ""))
 end
 
+-- A commit or a range such as abc123..HEAD, if git knows it.
+local function as_revision(root, text)
+  text = (text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+  if text:find("%.%.") then
+    local a, b = text:match("^(.-)%.%.%.?(.*)$")
+    if git_out(root, "rev-parse", "--verify", "--quiet", (a ~= "" and a or "HEAD") .. "^{commit}")
+      and git_out(root, "rev-parse", "--verify", "--quiet", (b ~= "" and b or "HEAD") .. "^{commit}") then
+      return text
+    end
+  elseif text:match("^%x+$") and #text >= 7 or text:find("^HEAD") then
+    return git_out(root, "rev-parse", "--verify", "--quiet", text .. "^{commit}") and text or nil
+  end
+end
+
+-- Pick one of the recent commits, or type a SHA or range. Returns the revision.
+local function pick_commit(root)
+  local items = {}
+  local log = git_out(root, "log", "-40", "--format=%h%x09%s%x09%an%x09%cr")
+  for line in (log or ""):gmatch("[^\n]+") do
+    local h, s, an, cr = line:match("^(%x+)\t(.-)\t(.-)\t(.*)$")
+    if h then items[#items + 1] = { id = h, title = s, subtitle = h .. " · " .. an, detail = cr, icon = "branch" } end
+  end
+  local pick = rex.ui.pick{ title = "Commit to review", items = items, allow_other = true,
+    placeholder = "Filter, or type a SHA or a range like origin/main..HEAD" }
+  if type(pick) ~= "table" then return pick end
+  return as_revision(root, pick.text) or error("not a commit or range in " .. base(root) .. ": " .. pick.text, 0)
+end
+
+-- The review prompt's opening for a commit or a range.
+local function commit_scope(root, rev)
+  if rev:find("%.%.") then
+    local n = git_out(root, "rev-list", "--count", rev) or "?"
+    return ("the %s commit(s) in %s: `git log -p --reverse %s`"):format(n, rev, rev)
+  end
+  local subject = git_out(root, "log", "-1", "--format=%s", rev) or ""
+  return ("commit %s (%s): `git show %s`"):format(rev, subject, rev)
+end
+
 rex.action{
   name        = "second_opinion",
   title       = "Second Opinion Review…",
   description = "Split a reviewer agent beside this pane for an adversarial review of the repo's changes or a merge request.",
   category    = "Review",
   keywords    = "review adversarial second opinion pi codex claude mr merge request diff",
-  -- target: "diff" for the repo's changes, or an MR number or URL.
+  -- target: "diff" for the branch's changes, "mr" for its open MR, "commit" to pick one,
+  -- a commit SHA or range, or an MR number or URL.
   args        = { reviewer = "string?", target = "string?" },
   run         = function(ctx, args)
     local cwd = cwd_of(ctx.session_id, ctx.block_id)
@@ -253,15 +292,21 @@ rex.action{
     if target == nil then
       local branch = git_out(root, "rev-parse", "--abbrev-ref", "HEAD") or "HEAD"
       local pick = rex.ui.pick{
-        title = "Review what?", placeholder = "Or type an MR number or URL", allow_other = true,
+        title = "Review what?", placeholder = "Or type a SHA, a range, or an MR number or URL", allow_other = true,
         items = {
           { id = "diff", title = "This branch's changes", subtitle = base(root) .. " · " .. branch, icon = "branch" },
+          { id = "commit", title = "A commit…", subtitle = "pick from the recent commits", icon = "clock" },
           { id = "mr", title = "The open MR for " .. branch, subtitle = "via glab", icon = "link" },
         },
       }
       if pick == nil then return end
       target = type(pick) == "table" and pick.text or pick
     end
+    if target == "commit" then
+      target = pick_commit(root)
+      if target == nil then return end
+    end
+    local rev = target ~= "diff" and target ~= "mr" and as_revision(root, target)
     local reviewer = args.reviewer or rex.ui.pick{ title = "Reviewer", items = REVIEWERS }
     if reviewer == nil then return end
 
@@ -273,6 +318,8 @@ rex.action{
       local mb = git_out(root, "merge-base", default, "HEAD") or "HEAD~1"
       prompt = ("Do an adversarial code review of this branch's changes: `git diff %s` (merge-base with %s, "
         .. "including uncommitted work)."):format(mb:sub(1, 12), default) .. rules
+    elseif rev then
+      prompt = "Do an adversarial code review of " .. commit_scope(root, rev) .. "." .. rules
     elseif target == "mr" then
       prompt = "Do an adversarial code review of the open GitLab merge request for the current branch. "
         .. "Read it with `glab mr view` and `glab mr diff`, including existing discussion." .. rules
@@ -336,6 +383,9 @@ rex.action{
 local PROMPTS = {
   { id = "adv_review", title = "Adversarial review of an MR",
     text = "Do an adversarial review on: {mr}" },
+  { id = "adv_commit", title = "Adversarial review of a local commit",
+    text = "Do an adversarial code review of {commit}. Report findings ranked by severity with file:line "
+      .. "and the failure scenario. Don't edit files." },
   { id = "adv_again", title = "Another round of adversarial review",
     text = "Do another round of adversarial review on {mr}, including the replies to previous comments." },
   { id = "address_again", title = "Address it, then ask for another round",
@@ -398,8 +448,8 @@ rex.action{
   description = "Type one of your most-used prompts into the focused agent, filling in the MR, agent, or file.",
   category    = "Agents",
   keywords    = "prompt snippet template adversarial review mr merged dd datadog status diff commit",
-  -- id picks the prompt; send=true also presses Enter. mr, agent, path, and text skip their questions.
-  args        = { id = "string?", send = "boolean?", mr = "string?", agent = "string?", path = "string?",
+  -- id picks the prompt; send=true also presses Enter. mr, commit, agent, path, and text skip their questions.
+  args        = { id = "string?", send = "boolean?", mr = "string?", commit = "string?", agent = "string?", path = "string?",
                   text = "string?" },
   run         = function(ctx, args)
     if ctx.block_id == nil then error("no focused pane to type into", 0) end
@@ -421,6 +471,15 @@ rex.action{
     if text:find("{mr}", 1, true) then
       fill.mr = args.mr or ask_mr(cwd_of(ctx.session_id, ctx.block_id))
       if fill.mr == nil then return end
+    end
+    if text:find("{commit}", 1, true) then
+      local cwd = cwd_of(ctx.session_id, ctx.block_id)
+      local root = cwd and git_out(cwd, "rev-parse", "--show-toplevel")
+      if root == nil then error("the focused pane isn't in a git repository", 0) end
+      local rev = args.commit and (as_revision(root, args.commit) or error("not a commit or range: " .. args.commit, 0))
+        or pick_commit(root)
+      if rev == nil then return end
+      fill.commit = commit_scope(root, rev)
     end
     if text:find("{agent}", 1, true) then
       local list, items = agents(), {}
