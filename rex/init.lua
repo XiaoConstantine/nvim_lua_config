@@ -45,10 +45,38 @@ rex.bind("ctrl+b>z", "pane.zoom")
 rex.bind("ctrl+b>x", "pane.close")
 rex.bind("ctrl+b>shift+1", "pane.move_to_new_tab") -- ! (break-pane)
 
--- tmux's "last" keys: last-window, last-pane, switch-client -l.
-rex.bind("ctrl+b>l", "client.tab.recent")
-rex.bind("ctrl+b>;", "pane.focus_back")
-rex.bind("ctrl+b>shift+l", "session.back")
+-- tmux's "last" keys: last-window, last-pane, switch-client -l. preview.23 dropped
+-- client.tab.recent, pane.focus_back, and session.back for one client.navigate.back;
+-- the server's focus_history.reverse (API 19+) still scopes the step to a tab, pane,
+-- or session. On an older server it falls back to client.navigate.back.
+local back_scope = {
+  tab     = function(sid, wid) return { session_id = sid, not_window_id = wid } end,
+  pane    = function(sid, wid) return { window_id = wid } end,
+  session = function(sid, wid) return { not_session_id = sid } end,
+}
+rex.action{
+  name        = "go_back",
+  title       = "Go Back (Last Tab, Pane, or Session)",
+  description = "Returns to the last tab in this session, pane in this tab, or other session.",
+  category    = "Navigation",
+  keywords    = "last recent previous back tab window pane session tmux",
+  args        = { to = "string?" },
+  run         = function(ctx, args)
+    local scope = back_scope[args.to or "tab"] or back_scope.tab
+    local d = ctx.block_id and rex.call("session.describe_block",
+      { session_id = ctx.session_id, block_id = ctx.block_id })
+    local wid = d and d.block and d.block.window_id
+    local r, err = rex.call("focus_history.reverse", scope(ctx.session_id, wid))
+    if err ~= nil then
+      rex.client.queue("client.navigate.back", {})
+    elseif r and r.session_id then
+      rex.client.queue("session.select", { session_id = r.session_id, window_id = r.window_id })
+    end
+  end,
+}
+rex.bind("ctrl+b>l", "go_back", { to = "tab" })
+rex.bind("ctrl+b>;", "go_back", { to = "pane" })
+rex.bind("ctrl+b>shift+l", "go_back", { to = "session" })
 
 -- vi copy mode, as in tmux (prefix [). Rex's defaults inside it: h/j/k/l w/b/e,
 -- v (char), shift+v (line), ctrl+v (block), / ? n N, y or Enter to yank, q to leave.
